@@ -2,10 +2,10 @@
 #include "core/shader.h"
 #include "core/window.h"
 #include <string>
-class CoreApp {
+class BaseApp {
 public:
-  CoreApp();
-  virtual ~CoreApp();
+  BaseApp();
+  virtual ~BaseApp();
 
   virtual void init(unsigned int width, unsigned int height,
                     const std::string &title);

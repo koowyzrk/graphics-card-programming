@@ -1,18 +1,18 @@
-#include "core/coreapp.h"
+#include "core/baseapp.h"
 #include "core/window.h"
-CoreApp::CoreApp() : is_running(false) {}
+BaseApp::BaseApp() : is_running(false) {}
 
-CoreApp::~CoreApp() {}
+BaseApp::~BaseApp() {}
 
-void CoreApp::init(unsigned int width, unsigned int height,
+void BaseApp::init(unsigned int width, unsigned int height,
                    const std::string &title) {
   window = new Window(width, height, title);
   init_app();
 }
 
-void CoreApp::init_app() {};
+void BaseApp::init_app() {};
 
-void CoreApp::run() {
+void BaseApp::run() {
   is_running = true;
   while (is_running) {
     if (window->shouldClose()) {

@@ -1,7 +1,7 @@
 #include "core/coreapp.h"
 #include "core/shader.h"
 
-class Triangle : public CoreApp {
+class Triangle : public BaseApp {
 public:
   Triangle();
   ~Triangle() override;

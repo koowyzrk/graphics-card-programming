@@ -1,6 +1,6 @@
 #include "core/coreapp.h"
 
-class Sierpinski : public CoreApp {
+class Sierpinski : public BaseApp {
 public:
   Sierpinski();
   ~Sierpinski() override;
