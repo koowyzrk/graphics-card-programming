@@ -174,3 +174,16 @@ void Shader::setUniform(const std::string &uniformName,
     }
   }
 }
+
+void Shader::setUniform(const std::string &uniformName,
+                        const glm::mat4 &matrix) {
+  if (uniforms_locations.count(uniformName)) {
+    glProgramUniformMatrix4fv(program_id, uniforms_locations[uniformName], 1,
+                              GL_FALSE, glm::value_ptr(matrix));
+  } else {
+    if (getUniformLocation(uniformName)) {
+      glProgramUniformMatrix4fv(program_id, uniforms_locations[uniformName], 1,
+                                GL_FALSE, glm::value_ptr(matrix));
+    }
+  }
+}

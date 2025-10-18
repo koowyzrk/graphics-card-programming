@@ -1,5 +1,6 @@
-#include "core/coreapp.h"
+#include "core/baseapp.h"
 #include "core/shader.h"
+#include "core/utils.h"
 
 class Triangle : public BaseApp {
 public:
@@ -15,7 +16,8 @@ protected:
 private:
   Shader *firstShader = nullptr;
   Shader *secondShader = nullptr;
-  GLuint VAOs[2]{};
-  GLuint VBOs[2]{};
+  GLuint VAO = 0;
+  GLuint VBO = 0;
   GLuint EBO = 0;
+  unsigned int textures[2]{};
 };

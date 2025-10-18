@@ -1,8 +1,4 @@
 #include "utils.h"
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
 
 std::string Utils::getFileContent(const std::filesystem::path &filename) {
   if (filename.empty()) {
@@ -23,3 +19,10 @@ std::string Utils::getFileContent(const std::filesystem::path &filename) {
 
   return contents.str();
 };
+
+unsigned char *Utils::loadTexture(const std::string &dir,
+                                  const std::string &name, int *width,
+                                  int *height, int *channels) {
+  std::string path = dir + name;
+  return stbi_load(path.c_str(), width, height, channels, 0);
+}

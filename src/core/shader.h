@@ -20,6 +20,7 @@ public:
   void setUniform(const std::string &uniform_name, GLuint value);
   void setUniform(const std::string &uniformName, const glm::vec3 &vector);
   void setUniform(const std::string &uniformName, const glm::vec4 &vector);
+  void setUniform(const std::string &uniformName, const glm::mat4 &matrices);
 
 private:
   void addShader(const std::filesystem::path &shader_filepath, GLuint type);
