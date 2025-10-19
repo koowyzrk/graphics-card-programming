@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "GLFW/glfw3.h"
 #include <glad/glad.h>
 #include <map>
 

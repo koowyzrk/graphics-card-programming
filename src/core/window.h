@@ -1,4 +1,5 @@
 #pragma once
+#include "imgui_impl/imgui_impl_glfw.h"
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <glm/mat4x4.hpp>
@@ -15,6 +16,8 @@ class Window {
 public:
   Window(unsigned int width, unsigned int height, const std::string &title);
   ~Window();
+
+  static GLFWwindow *getWindow();
 
   static int shouldClose();
 

@@ -6,8 +6,8 @@
 // #include "imgui_impl/imgui_impl_opengl3.h"
 // #include <stdio.h>
 
-#include "apps/sierpinski/sierpinski.h"
-// #include "apps/triangle/triangle.h"
+// #include "apps/sierpinski/sierpinski.h"
+#include "apps/triangle/triangle.h"
 
 #define IMGUI_IMPL_OPENGL_LOADER_GLAD
 
@@ -32,8 +32,8 @@
 
 int main(int, char **) {
 
-  // Triangle app;
-  Sierpinski app;
+  Triangle app;
+  // Sierpinski app;
   app.init(1920, 1080, "test");
   app.run();
   return 0;

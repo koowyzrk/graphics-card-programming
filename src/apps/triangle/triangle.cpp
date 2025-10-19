@@ -126,7 +126,10 @@ void Triangle::init_app() {
   // 0.0f, 1.0f)); firstShader->setUniform("transform", trans);
 };
 
-void Triangle::input() {};
+void Triangle::input() {
+  ImGui::Begin("Controls");
+  ImGui::End();
+};
 
 void Triangle::update() {};
 
