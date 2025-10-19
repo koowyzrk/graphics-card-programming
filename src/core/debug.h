@@ -1,6 +1,6 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <glad/glad.h> // or <GL/glew.h> if you use GLEW
+#include <glad/glad.h>
 #include <iostream>
 inline void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
                                    GLenum severity, GLsizei length,

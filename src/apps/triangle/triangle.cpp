@@ -173,6 +173,6 @@ void Triangle::render() {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
   glBindVertexArray(0); // no need to unbind it every time
-  // End frame and swap buffers (double buffering)
-  window->endFrame();
+  // End frame and swap buffers (double buffering) we do it in baseapp
+  // window->endFrame();
 };

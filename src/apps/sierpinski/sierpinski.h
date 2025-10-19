@@ -1,3 +1,4 @@
+#pragma once
 #include "core/baseapp.h"
 #include "core/utils.h"
 #include "glm/ext/vector_float3.hpp"
@@ -31,4 +32,10 @@ private:
   float rotationX = 0.0f;
   float rotationY = 0.0f;
   glm::vec3 fracColor = {1.0f, 1.0f, 1.0f};
+
+  float s = 1.0f;
+  glm::vec3 A = glm::vec3(s / 2.0f, 0.0f, -s / (2.0f * glm::sqrt(3.0f)));
+  glm::vec3 B = glm::vec3(-s / 2.0f, 0.0f, -s / (2.0f * glm::sqrt(3.0f)));
+  glm::vec3 C = glm::vec3(0.0f, 0.0f, s / (glm::sqrt(3.0f)));
+  glm::vec3 D = glm::vec3(0.0f, s *glm::sqrt(6.0f) / 3.0f, 0.0f);
 };

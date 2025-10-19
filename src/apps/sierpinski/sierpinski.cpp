@@ -1,5 +1,4 @@
 #include "sierpinski.h"
-#include "glm/exponential.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "imgui.h"
 
@@ -9,12 +8,6 @@ Sierpinski::~Sierpinski() {};
 void Sierpinski::init_app() {
   std::string dir = "src/apps/sierpinski/res/";
   shader = new Shader(dir + "shaders/basic.vert", dir + "shaders/basic.frag");
-
-  glm::vec3 A(-0.5f, 0.0f, 0.0f);
-  glm::vec3 B(0.0f, 0.0f, -(0.5f * glm::sqrt(3.0f)) / 2.0f);
-  glm::vec3 C(0.5f, 0.0f, 0.0f);
-  glm::vec3 D(0.0f, (0.5f * glm::sqrt(6.0f)) / 3.0f,
-              -(0.5f * glm::sqrt(3.0f)) / 6.0f);
 
   generatePyramid(A, B, C, D, recursionLevel);
 
@@ -55,7 +48,16 @@ void Sierpinski::init_app() {
     std::cout << "Failed to load texture" << std::endl;
   }
   stbi_image_free(data);
+
+  // tell opengl for each sampler to which texture unit it belongs to (only has
+  // to be done once)
+  // -------------------------------------------------------------------------------------------
+  shader->use();
+  shader->setUniform("texture1", 0);
+
+  glEnable(GL_DEPTH_TEST);
 };
+
 void Sierpinski::input() {
   ImGui::Begin("Controls");
   ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 5);
@@ -64,15 +66,10 @@ void Sierpinski::input() {
   ImGui::SliderFloat("Rotate Y", &rotationY, 0.0f, 360.0f);
   ImGui::End();
 };
+
 void Sierpinski::update() {
   if (recursionLevel != lastRecursionLevel) {
     vertices.clear();
-
-    glm::vec3 A(-0.5f, 0.0f, 0.0f);
-    glm::vec3 B(0.0f, 0.0f, -(0.5f * glm::sqrt(3.0f)) / 2.0f);
-    glm::vec3 C(0.5f, 0.0f, 0.0f);
-    glm::vec3 D(0.0f, (0.5f * glm::sqrt(6.0f)) / 3.0f,
-                -(0.5f * glm::sqrt(3.0f)) / 6.0f);
 
     generatePyramid(A, B, C, D, recursionLevel);
 
@@ -84,14 +81,17 @@ void Sierpinski::update() {
     lastRecursionLevel = recursionLevel;
   }
 };
+
 void Sierpinski::render() {
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // bind textures on corresponding texture units
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture);
+
   shader->use();
+
   glm::mat4 transform = glm::mat4(1.0f);
   transform = glm::rotate(transform, glm::radians(rotationX),
                           glm::vec3(1.0f, 0.0f, 0.0f));
@@ -99,12 +99,19 @@ void Sierpinski::render() {
                           glm::vec3(0.0f, 1.0f, 0.0f));
   shader->setUniform("transform", transform);
 
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  shader->setUniform("view", view);
+
+  glm::mat4 projection =
+      glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+  shader->setUniform("projection", projection);
+
+  shader->setUniform("fracColor", fracColor);
   glBindVertexArray(VAO);
   glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 5);
 
-  glBindVertexArray(0); // no need to unbind it every time
-  // End frame and swap buffers (double buffering)
-  window->endFrame();
+  glBindVertexArray(0);
 };
 
 void Sierpinski::generatePyramid(glm::vec3 a, glm::vec3 b, glm::vec3 c,

@@ -5,8 +5,13 @@
 
 class Gui {
 public:
-  static void init(GLFWwindow *window, const char *glsl_version);
-  static void begin();
-  static void end();
-  static void shutdown();
+  Gui(GLFWwindow *window, const char *glsl_version);
+  ~Gui();
+
+  void begin();
+  void end();
+
+private:
+  GLFWwindow *window;
+  const char *glsl_version;
 };

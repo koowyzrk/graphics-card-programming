@@ -1,28 +1,29 @@
 #include "core/baseapp.h"
 #include "core/window.h"
-BaseApp::BaseApp() : is_running(false) {}
 
+#define IMGUI_IMPL_OPENGL_LOADER_GLAD
+const char *glsl_version = "#version 460";
+
+BaseApp::BaseApp() : is_running(false) {}
 BaseApp::~BaseApp() {}
 
 void BaseApp::init(unsigned int width, unsigned int height,
                    const std::string &title) {
   window = new Window(width, height, title);
-  Gui::init(window->getWindow(), "#versin 330");
+  gui = new Gui(window->getWindow(), glsl_version);
   init_app();
 }
-
 void BaseApp::run() {
   is_running = true;
   while (is_running) {
     if (window->shouldClose()) {
       is_running = false;
     }
-    Gui::begin();
+    gui->begin();
     input();
     update();
     render();
-    Gui::end();
+    gui->end();
     window->endFrame();
   }
-  Gui::shutdown();
 };
