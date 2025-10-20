@@ -1,27 +1,35 @@
 #include "core/window.h"
 #include "core/debug.h"
 
-GLFWwindow *Window::window = nullptr;
-std::string Window::title = "";
-glm::ivec2 Window::window_size = glm::ivec2(0);
-
+/**
+ * @brief Constructor for the Window class.
+ * initializes GLFW,
+ * creates an OpenGL window,
+ * sets up the OpenGL context,
+ * loads OpenGL function pointers using GLAD.
+ *
+ * @param width The desired width of the window in pixels.
+ * @param height The desired height of the window in pixels.
+ * @param title The title string for the window.
+ */
 Window::Window(unsigned int width, unsigned int height,
-               const std::string &title) {
-  this->title = title;
-  window_size = glm::ivec2(width, height);
+               const std::string &title)
+    : title_(title), window_size_(width, height) {
 
   glfwSetErrorCallback(glfw_error_callback);
+
+  // glfw: initialize
+  // ------------------------------
   if (!glfwInit()) {
     std::cerr << "ERROR: Could not initialize GLFW." << std::endl;
     exit(EXIT_FAILURE);
   }
-
-  // glfw: initialize and configure
-  // ------------------------------
+  // glfw: configure window hints
+  // --------------------------------------------------------
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
+  // set OpenGL profile to Core (OpenGL without deprecated functions)
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #ifdef __APPLE__
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -29,11 +37,10 @@ Window::Window(unsigned int width, unsigned int height,
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif
 
-  // glfw window creation
+  // glfw: window creation
   // --------------------
-  window = glfwCreateWindow(window_size.x, window_size.y, title.c_str(),
+  window = glfwCreateWindow(window_size_.x, window_size_.y, title.c_str(),
                             nullptr, nullptr);
-
   if (!window) {
     std::cerr << "ERROR: Could not create window and OpenGL context."
               << std::endl;
@@ -41,7 +48,9 @@ Window::Window(unsigned int width, unsigned int height,
     exit(EXIT_FAILURE);
   }
 
+  // make created window the current context on OpenGL
   glfwMakeContextCurrent(window);
+
   setVSync(false);
 
   // glad: load all OpenGL function pointers
@@ -59,10 +68,6 @@ Window::Window(unsigned int width, unsigned int height,
   // setViewportMatrix(m_viewport_size.x, m_viewport_size.y);
   //
   // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-  //
-  // /* Init Input & GUI */
-  // Input::init(m_window);
-  // GUI::init(m_window);
 
 #ifdef _DEBUG
   int flags;
@@ -79,6 +84,11 @@ Window::Window(unsigned int width, unsigned int height,
 #endif
 }
 
+/**
+ * @brief Destructor for the Window class.
+ * Cleans up GLFW resources, destroying the window and
+ * terminating the GLFW library.
+ */
 Window::~Window() {
   if (window) {
     glfwDestroyWindow(window);
@@ -88,13 +98,15 @@ Window::~Window() {
 }
 
 GLFWwindow *Window::getWindow() { return window; }
-
-int Window::shouldClose() { return glfwWindowShouldClose(window); }
-
-void Window::endFrame() {
-  glfwPollEvents();
-  glfwMakeContextCurrent(window);
-  glfwSwapBuffers(window);
-}
+glm::ivec2 Window::getSize() { return window_size_; }
 
 void Window::setVSync(bool enabled) { glfwSwapInterval(enabled ? 1 : 0); }
+
+void Window::endFrame() {
+  glfwPollEvents(); // Process all pending GLFW events (input, window resize,
+                    // etc.)
+  glfwMakeContextCurrent(
+      window); // Ensure this window's OpenGL context is active
+  glfwSwapBuffers(
+      window); // Swap front and back buffers to show the rendered frame
+}

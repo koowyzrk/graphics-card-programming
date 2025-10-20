@@ -1,8 +1,5 @@
 #pragma once
-#include <cstdio>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <stb_image.h>
 
 #include <filesystem>

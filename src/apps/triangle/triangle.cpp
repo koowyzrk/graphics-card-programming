@@ -1,10 +1,14 @@
-#include "triangle.h"
+#include <iostream>
+#include <stb_image.h>
+
 #include "GLFW/glfw3.h"
 #include "core/shader.h"
+#include "core/utils.h"
+#include "triangle.h"
+
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
-#include <stb_image.h>
 
 Triangle::Triangle() {};
 Triangle::~Triangle() {};

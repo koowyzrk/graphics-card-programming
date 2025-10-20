@@ -1,5 +1,6 @@
 #include "apps/sierpinski/sierpinski.h"
 #include "apps/triangle/triangle.h"
+#include <iostream>
 
 int main(int, char **) {
 

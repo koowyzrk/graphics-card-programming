@@ -1,7 +1,6 @@
 #pragma once
 #include "core/baseapp.h"
 #include "core/shader.h"
-#include "core/utils.h"
 
 class Triangle : public BaseApp {
 public:

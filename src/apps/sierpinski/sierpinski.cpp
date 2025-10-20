@@ -1,6 +1,8 @@
 #include "sierpinski.h"
+#include "core/utils.h"
 #include "glm/ext/vector_float3.hpp"
 #include "imgui.h"
+#include <iostream>
 
 Sierpinski::Sierpinski() {};
 Sierpinski::~Sierpinski() {};

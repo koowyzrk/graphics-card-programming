@@ -1,10 +1,8 @@
 #pragma once
-#include "imgui_impl/imgui_impl_glfw.h"
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
-#include <iostream>
 #include <string>
 
 constexpr int32_t WINDOW_WIDTH = 1920;
@@ -17,17 +15,18 @@ public:
   Window(unsigned int width, unsigned int height, const std::string &title);
   ~Window();
 
-  static GLFWwindow *getWindow();
+  GLFWwindow *getWindow();
+  glm::ivec2 getSize();
 
-  static int shouldClose();
+  int shouldClose() { return glfwWindowShouldClose(window); };
 
-  void endFrame();
   void setVSync(bool enabled);
+  void endFrame();
 
 private:
-  static GLFWwindow *window;
-  static std::string title;
-  static glm::ivec2 window_size;
+  GLFWwindow *window = nullptr;
+  std::string title_ = "";
+  glm::ivec2 window_size_ = glm::ivec2(0);
 
   static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);

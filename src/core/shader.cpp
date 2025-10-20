@@ -1,8 +1,7 @@
 #include "shader.h"
-#include <glm/gtc/type_ptr.hpp>
-
 #include "utils.h"
 #include <cstdio>
+#include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader() : program_id(0), is_linked(false) {
   program_id = glCreateProgram();
@@ -94,7 +93,6 @@ bool Shader::link() {
     }
   } else {
     is_linked = true;
-    // addAllSubroutines();
   }
 
   return is_linked;
