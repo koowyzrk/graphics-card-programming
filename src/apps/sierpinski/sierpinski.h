@@ -32,6 +32,9 @@ private:
   float rotationX = 0.0f;
   float rotationY = 0.0f;
   glm::vec3 fracColor = {1.0f, 1.0f, 1.0f};
+  // addtional
+  float saturation = 0.0f;
+  //
 
   float s = 1.0f;
   glm::vec3 A = glm::vec3(s / 2.0f, 0.0f, -s / (2.0f * glm::sqrt(3.0f)));

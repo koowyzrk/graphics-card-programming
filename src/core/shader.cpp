@@ -148,6 +148,19 @@ void Shader::setUniform(const std::string &uniformName, GLuint value) {
 }
 
 void Shader::setUniform(const std::string &uniformName,
+                        const glm::vec2 &vector) {
+  if (uniforms_locations.count(uniformName)) {
+    glProgramUniform2fv(program_id, uniforms_locations[uniformName], 1,
+                        glm::value_ptr(vector));
+  } else {
+    if (getUniformLocation(uniformName)) {
+      glProgramUniform2fv(program_id, uniforms_locations[uniformName], 1,
+                          glm::value_ptr(vector));
+    }
+  }
+}
+
+void Shader::setUniform(const std::string &uniformName,
                         const glm::vec3 &vector) {
   if (uniforms_locations.count(uniformName)) {
     glProgramUniform3fv(program_id, uniforms_locations[uniformName], 1,

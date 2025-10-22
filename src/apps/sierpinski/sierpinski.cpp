@@ -20,6 +20,17 @@ void Sierpinski::init_app() {
   glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float),
                vertices.data(), GL_STATIC_DRAW);
 
+  // only with color and texture attribute
+  // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void
+  // *)0); glEnableVertexAttribArray(0); glVertexAttribPointer(1, 2, GL_FLOAT,
+  // GL_FALSE, 8 * sizeof(float),
+  //                       (void *)(3 * sizeof(float)));
+  // glEnableVertexAttribArray(1);
+  // glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  //                       (void *)(5 * sizeof(float)));
+  // glEnableVertexAttribArray(2);
+
+  // only with texture atribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
@@ -66,6 +77,10 @@ void Sierpinski::input() {
   ImGui::ColorEdit3("Color", glm::value_ptr(fracColor));
   ImGui::SliderFloat("Rotate X", &rotationX, 0.0f, 360.0f);
   ImGui::SliderFloat("Rotate Y", &rotationY, 0.0f, 360.0f);
+  // additional
+  ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f);
+  //
+
   ImGui::End();
 };
 
@@ -109,6 +124,13 @@ void Sierpinski::render() {
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
   shader->setUniform("projection", projection);
 
+  // additional
+  shader->setUniform("saturation", saturation);
+  double offset = (float)glfwGetTime();
+  glm::vec2 texOffset = glm::vec2(offset, offset);
+  shader->setUniform("TexOffset", texOffset);
+  //
+
   shader->setUniform("fracColor", fracColor);
   glBindVertexArray(VAO);
   glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 5);
@@ -141,9 +163,23 @@ void Sierpinski::generatePyramid(glm::vec3 a, glm::vec3 b, glm::vec3 c,
 }
 
 void Sierpinski::addTriangle(glm::vec3 a, glm::vec3 b, glm::vec3 c) {
+  // defining color atributes for triangle
+  // glm::vec3 c1(1.0f, 0.0f, 0.0f);
+  // glm::vec3 c2(0.0f, 1.0f, 0.0f);
+  // glm::vec3 c3(0.0f, 0.0f, 1.0f);
+
+  // defining textures cords for one triangle
   glm::vec2 t1(0.0f, 0.0f);
   glm::vec2 t2(1.0f, 0.0f);
   glm::vec2 t3(0.5f, 1.0f);
+
+  // only with texture atributes
   vertices.insert(vertices.end(), {a.x, a.y, a.z, t1.x, t1.y, b.x, b.y, b.z,
                                    t2.x, t2.y, c.x, c.y, c.z, t3.x, t3.y});
+
+  // adding extra color atributes
+  // vertices.insert(vertices.end(),
+  //                 {a.x, a.y, a.z, t1.x, t1.y, c1.x, c1.y, c1.z,
+  //                  b.x, b.y, b.z, t2.x, t2.y, c2.x, c2.y, c2.z,
+  //                  c.x, c.y, c.z, t3.x, t3.y, c3.x, c3.y, c3.z});
 }

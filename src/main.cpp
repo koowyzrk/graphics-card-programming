@@ -4,7 +4,7 @@
 
 int main(int, char **) {
 
-  int choice = 2;
+  int choice = 0;
 
   std::cout << "=============================\n";
   std::cout << "   Select Project to Run\n";
@@ -13,12 +13,12 @@ int main(int, char **) {
   std::cout << "2. Sierpinski\n";
   std::cout << "-----------------------------\n";
   std::cout << "Enter choice (1-2): ";
-  // std::cin >> choice;
-  //
-  // if (std::cin.fail() || (choice != 1 && choice != 2)) {
-  //   std::cerr << "Invalid choice. Exiting.\n";
-  //   return -1;
-  // }
+  std::cin >> choice;
+
+  if (std::cin.fail() || (choice != 1 && choice != 2)) {
+    std::cerr << "Invalid choice. Exiting.\n";
+    return -1;
+  }
 
   BaseApp *app = nullptr;
 
