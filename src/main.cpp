@@ -11,8 +11,9 @@ int main(int, char **) {
   std::cout << "=============================\n";
   std::cout << "1. Triangle\n";
   std::cout << "2. Sierpinski\n";
+  std::cout << "3. Solar System\n";
   std::cout << "-----------------------------\n";
-  std::cout << "Enter choice (1-2): ";
+  std::cout << "Enter choice (1-3): ";
   std::cin >> choice;
 
   if (std::cin.fail() || (choice != 1 && choice != 2)) {
@@ -30,6 +31,11 @@ int main(int, char **) {
   case 2:
     std::cout << "Launching Sierpinski project...\n";
     app = new Sierpinski();
+    break;
+  case 3:
+    std::cout << "Launching Solar System project...\n";
+    // in work
+    // app = new Triangle();
     break;
   }
 

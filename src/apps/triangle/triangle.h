@@ -12,6 +12,7 @@ protected:
   void input() override;
   void update() override;
   void render() override;
+  void render_gui() override;
 
 private:
   Shader *firstShader = nullptr;

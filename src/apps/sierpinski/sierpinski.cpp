@@ -1,4 +1,6 @@
 #include "sierpinski.h"
+#include "GLFW/glfw3.h"
+#include "core/camera.h"
 #include "core/utils.h"
 #include "glm/ext/vector_float3.hpp"
 #include "imgui.h"
@@ -10,6 +12,12 @@ Sierpinski::~Sierpinski() {};
 void Sierpinski::init_app() {
   std::string dir = "src/apps/sierpinski/res/";
   shader = new Shader(dir + "shaders/basic.vert", dir + "shaders/basic.frag");
+  camera = new Camera(Camera::Perspective(glm::vec3(0.0f, 0.0f, 3.0f),
+                                          glm::radians(45.0f),
+                                          1920.0f / 1080.0f, 0.1f, 100.0f));
+
+  // for mouse
+  glfwSetInputMode(window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   generatePyramid(A, B, C, D, recursionLevel);
 
@@ -72,16 +80,28 @@ void Sierpinski::init_app() {
 };
 
 void Sierpinski::input() {
-  ImGui::Begin("Controls");
-  ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 5);
-  ImGui::ColorEdit3("Color", glm::value_ptr(fracColor));
-  ImGui::SliderFloat("Rotate X", &rotationX, 0.0f, 360.0f);
-  ImGui::SliderFloat("Rotate Y", &rotationY, 0.0f, 360.0f);
-  // additional
-  ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f);
-  //
+  GLFWwindow *glfwWin = window->getWindow();
+  if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
+    camera->processKeyboard(CameraMovement ::FORWARD, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
+    camera->processKeyboard(CameraMovement ::BACKWARD, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+    camera->processKeyboard(CameraMovement ::RIGHT, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
+    camera->processKeyboard(CameraMovement ::LEFT, deltaTime);
 
-  ImGui::End();
+  double mouseX, mouseY;
+  glfwGetCursorPos(glfwWin, &mouseX, &mouseY);
+  if (firstMouse) {
+    lastX = mouseX;
+    lastY = mouseY;
+    firstMouse = false;
+  }
+  float xOffset = mouseX - lastX;
+  float yOffset = lastY - mouseY;
+  lastX = mouseX;
+  lastY = mouseY;
+  camera->processMouseMovement(xOffset, yOffset);
 };
 
 void Sierpinski::update() {
@@ -107,8 +127,14 @@ void Sierpinski::render() {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture);
 
-  shader->use();
+  // calculating delta time
+  float currentFrame = glfwGetTime();
+  deltaTime = currentFrame - lastFrame;
+  lastFrame = currentFrame;
+  //
 
+  shader->use();
+  // model
   glm::mat4 transform = glm::mat4(1.0f);
   transform = glm::rotate(transform, glm::radians(rotationX),
                           glm::vec3(1.0f, 0.0f, 0.0f));
@@ -116,13 +142,13 @@ void Sierpinski::render() {
                           glm::vec3(0.0f, 1.0f, 0.0f));
   shader->setUniform("transform", transform);
 
-  glm::mat4 view = glm::mat4(1.0f);
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-  shader->setUniform("view", view);
+  // glm::mat4 view = glm::mat4(1.0f);
+  // view = glm::translate(view, glm::vec3(0.0f, 0.0f, cameraPos));
+  shader->setUniform("view", camera->getViewMatrix());
 
-  glm::mat4 projection =
-      glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-  shader->setUniform("projection", projection);
+  // glm::mat4 projection =
+  //     glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+  shader->setUniform("projection", camera->getProjection());
 
   // additional
   shader->setUniform("saturation", saturation);
@@ -137,6 +163,18 @@ void Sierpinski::render() {
 
   glBindVertexArray(0);
 };
+
+void Sierpinski::render_gui() {
+  ImGui::Begin("Controls");
+  ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 5);
+  ImGui::ColorEdit3("Color", glm::value_ptr(fracColor));
+  ImGui::SliderFloat("Rotate X", &rotationX, 0.0f, 360.0f);
+  ImGui::SliderFloat("Rotate Y", &rotationY, 0.0f, 360.0f);
+  // additional
+  ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f);
+  //
+  ImGui::End();
+}
 
 void Sierpinski::generatePyramid(glm::vec3 a, glm::vec3 b, glm::vec3 c,
                                  glm::vec3 d, int depth) {

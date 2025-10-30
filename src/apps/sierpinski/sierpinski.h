@@ -1,5 +1,6 @@
 #pragma once
 #include "core/baseapp.h"
+#include "core/camera.h"
 #include "core/shader.h"
 #include "glm/ext/vector_float3.hpp"
 #include <vector>
@@ -13,6 +14,7 @@ public:
   void input() override;
   void update() override;
   void render() override;
+  void render_gui() override;
 
 private:
   void generatePyramid(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d,
@@ -22,7 +24,13 @@ private:
   GLuint VAO = 0;
   GLuint VBO = 0;
   Shader *shader = nullptr;
+  Camera *camera = nullptr;
   GLuint texture = 0;
+
+  // for mouse input
+  bool firstMouse = true;
+  double lastX = 0.0f;
+  double lastY = 0.0f;
 
   std::vector<float> vertices;
   std::vector<unsigned int> indicies;

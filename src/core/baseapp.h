@@ -17,8 +17,12 @@ protected:
   virtual void input() = 0;
   virtual void update() = 0;
   virtual void render() = 0;
+  virtual void render_gui() = 0;
 
   bool is_running = false;
   Window *window = nullptr;
   Gui *gui = nullptr;
+
+  float deltaTime = 0.0f;
+  float lastFrame = 0.0f;
 };

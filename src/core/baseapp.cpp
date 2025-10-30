@@ -23,6 +23,7 @@ void BaseApp::run() {
     input();
     update();
     render();
+    render_gui();
     gui->end();
     window->endFrame();
   }

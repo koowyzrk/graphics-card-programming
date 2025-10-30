@@ -130,10 +130,7 @@ void Triangle::init_app() {
   // 0.0f, 1.0f)); firstShader->setUniform("transform", trans);
 };
 
-void Triangle::input() {
-  ImGui::Begin("Controls");
-  ImGui::End();
-};
+void Triangle::input() {};
 
 void Triangle::update() {};
 
@@ -180,3 +177,8 @@ void Triangle::render() {
   // End frame and swap buffers (double buffering) we do it in baseapp
   // window->endFrame();
 };
+
+void Triangle::render_gui() {
+  ImGui::Begin("Controls");
+  ImGui::End();
+}
