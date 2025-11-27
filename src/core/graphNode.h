@@ -1,24 +1,30 @@
 #pragma once
 
-#include "core/mesh.h"
+#include "core/model.h"
+#include "core/shader.h"
+#include "core/transform.h"
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include <vector>
 class GraphNode {
 public:
-  GraphNode();
-  GraphNode(const glm::mat4 &transform);
+  GraphNode(Model *model = nullptr) : model_(model) {}
+  void addChild(std::shared_ptr<GraphNode> child);
+  std::vector<std::shared_ptr<GraphNode>> getChildren();
 
-  void addMesh(const Mesh &mesh);
-  void addChild(const GraphNode &child);
+  // transform section
+  Transform &getTransform();
+  void updateTransform(const glm::mat4 &parentGlobalTransform);
+  //
 
-  const glm::mat4 &getTransform() const;
-  void setTransform(const glm::mat4 &transform);
+  void draw(Shader &shader);
 
-  const std::vector<Mesh> &getMeshes() const;
-  const std::vector<GraphNode> &getChildren() const;
+  glm::vec3 getGlobalPosition() const;
 
 private:
-  glm::mat4 transform_;
-  std::vector<Mesh> meshes_;
-  std::vector<GraphNode> children_;
+  Model *model_;
+  std::vector<std::shared_ptr<GraphNode>> children_;
+
+  Transform transform_;
+  glm::mat4 globalTransform_ = glm::mat4(1.0f);
 };

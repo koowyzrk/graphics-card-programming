@@ -1,21 +1,34 @@
 #include "graphNode.h"
 
-GraphNode::GraphNode() : transform_(1.0f) {}
-
-GraphNode::GraphNode(const glm::mat4 &transform) : transform_(transform) {}
-
-void GraphNode::addMesh(const Mesh &mesh) { meshes_.push_back(mesh); }
-
-void GraphNode::addChild(const GraphNode &child) { children_.push_back(child); }
-
-const glm::mat4 &GraphNode::getTransform() const { return transform_; }
-
-void GraphNode::setTransform(const glm::mat4 &transform) {
-  transform_ = transform;
+void GraphNode::addChild(std::shared_ptr<GraphNode> child) {
+  children_.push_back(child);
 }
 
-const std::vector<Mesh> &GraphNode::getMeshes() const { return meshes_; }
-
-const std::vector<GraphNode> &GraphNode::getChildren() const {
+std::vector<std::shared_ptr<GraphNode>> GraphNode::getChildren() {
   return children_;
+}
+
+Transform &GraphNode::getTransform() { return transform_; }
+
+void GraphNode::updateTransform(const glm::mat4 &parentGlobalTransform) {
+  const glm::mat4 &localMat = transform_.getLocalMatrix();
+  globalTransform_ = parentGlobalTransform * localMat;
+  // updating transforms in childs
+  for (auto &child : children_) {
+    child->updateTransform(globalTransform_);
+  }
+}
+
+void GraphNode::draw(Shader &shader) {
+  if (model_) {
+    shader.setUniform("model", globalTransform_);
+    model_->draw(shader);
+  }
+  for (auto &child : children_) {
+    child->draw(shader);
+  }
+}
+
+glm::vec3 GraphNode::getGlobalPosition() const {
+  return glm::vec3(globalTransform_[3]);
 }

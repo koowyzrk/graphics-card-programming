@@ -1,6 +1,5 @@
 #include "mesh.h"
 #include "core/shader.h"
-#include "core/window.h"
 #include <cstddef>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,

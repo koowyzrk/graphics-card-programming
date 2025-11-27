@@ -1,7 +1,21 @@
 #pragma once
 #include "core/baseapp.h"
+#include "core/camera.h"
 #include "core/graphNode.h"
-#include "core/model.h"
+#include "glm/ext/vector_float3.hpp"
+
+struct CelestialBody {
+  std::shared_ptr<GraphNode> node;
+
+  float orbitRadius = 0.0f;
+  float orbitSpeed = 0.0f;
+  float selfRotationSpeed = 0.0f;
+
+  float currentOrbitAngle = 0.0f;
+  float currentSelfAngle = 0.0f;
+
+  glm::vec3 orbitColor = glm::vec3(1.0f);
+};
 
 class SolarSystem : public BaseApp {
 public:
@@ -13,23 +27,26 @@ protected:
   void input() override;
   void update() override;
   void render() override;
+  void render_gui() override;
 
 private:
-  GraphNode root_;
+  std::shared_ptr<GraphNode> rootNode_;
+  Shader *shader_ = nullptr;
+  Camera *camera_ = nullptr;
 
-  Model *loadedModel_;
-  // Mesh sphereMesh_;
+  std::unique_ptr<Model> loadedModel_;
+  std::unique_ptr<Model> generatedSunModel_;
+  std::unique_ptr<Model> generatedMoonModel_;
+  std::unique_ptr<Model> orbitModel_;
 
-  float systemRotationAngle_ = 0.0f;
-  float zoom_ = 50.0f;
+  std::vector<CelestialBody> celestialBodies_;
 
-  float planetAngles_[8];
-  float moonAngles_[10];
+  bool wireframeMode_ = false;
+  float globalSpeedMultiplier_ = 1.0f;
+  int sphereDetail_ = 32;
 
-  bool wireframe_ = false;
-  int meshDetail_ = 32;
-
-  Mesh generateSphere(int detail);
-  GraphNode createPlanet(float distance, float size, float revolutionSpeed,
-                         float rotationSpeed, const glm::vec3 &color);
+  void drawOrbits();
+  void createScene();
+  Model *generateSphereModel(GLuint sectorCount, GLuint stackCount);
+  Model *generateOrbitModel(int segments);
 };

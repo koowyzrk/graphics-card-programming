@@ -2,7 +2,6 @@
 #include "assimp/material.h"
 #include "assimp/mesh.h"
 #include "assimp/types.h"
-#include "core/graphNode.h"
 #include "core/mesh.h"
 #include "core/shader.h"
 #include "core/utils.h"
@@ -12,46 +11,19 @@
 #include <string>
 #include <vector>
 
-static glm::mat4 aiToGlm(const aiMatrix4x4 &m) {
-  glm::mat4 out;
-  out[0][0] = m.a1;
-  out[1][0] = m.a2;
-  out[2][0] = m.a3;
-  out[3][0] = m.a4;
-  out[0][1] = m.b1;
-  out[1][1] = m.b2;
-  out[2][1] = m.b3;
-  out[3][1] = m.b4;
-  out[0][2] = m.c1;
-  out[1][2] = m.c2;
-  out[2][2] = m.c3;
-  out[3][2] = m.c4;
-  out[0][3] = m.d1;
-  out[1][3] = m.d2;
-  out[2][3] = m.d3;
-  out[3][3] = m.d4;
-  return out;
-}
+Model::Model() {}
 
-Model::Model(std::string &path) { loadModel(path); }
+Model::Model(const std::string &path) { loadModel(path); }
 
-void Model::draw(Shader &shader) { drawNode(root_, shader, glm::mat4(1.0f)); }
-
-void Model::drawNode(const GraphNode &node, Shader &shader,
-                     const glm::mat4 &parentTransform) {
-  glm::mat4 global = parentTransform * node.getTransform();
-  shader.setUniform("model", global);
-
-  for (const Mesh &mesh : node.getMeshes()) {
-    mesh.draw(shader);
-  }
-
-  for (const GraphNode &child : node.getChildren()) {
-    drawNode(child, shader, global);
+void Model::draw(Shader &shader) {
+  for (GLuint i = 0; i < meshes_.size(); i++) {
+    meshes_[i].draw(shader);
   }
 }
 
-void Model::loadModel(std::string &path) {
+void Model::addMesh(Mesh mesh) { meshes_.push_back(mesh); }
+
+void Model::loadModel(const std::string &path) {
   Assimp::Importer importer;
 
   const aiScene *scene = importer.ReadFile(
@@ -64,22 +36,18 @@ void Model::loadModel(std::string &path) {
     exit(EXIT_FAILURE);
   }
   directory_ = path.substr(0, path.find_last_of('/'));
-  root_ = processNode(scene->mRootNode, scene);
+  processNode(scene->mRootNode, scene);
 }
 
-GraphNode Model::processNode(aiNode *node, const aiScene *scene) {
-  glm::mat4 transform = aiToGlm(node->mTransformation);
-  GraphNode graphNode(transform);
-  // Process meshes at this node
-  for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+void Model::processNode(aiNode *node, const aiScene *scene) {
+  for (GLuint i = 0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    graphNode.addMesh(processMesh(mesh, scene));
+    meshes_.push_back(processMesh(mesh, scene));
   }
-  // Recursively build child nodes
-  for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    graphNode.addChild(processNode(node->mChildren[i], scene));
+
+  for (GLuint i = 0; i < node->mNumChildren; i++) {
+    processNode(node->mChildren[i], scene);
   }
-  return graphNode;
 }
 
 Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {

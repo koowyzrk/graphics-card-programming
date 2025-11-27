@@ -1,4 +1,5 @@
 #include "apps/sierpinski/sierpinski.h"
+#include "apps/solar-system/solarSystem.h"
 #include "apps/triangle/triangle.h"
 #include <iostream>
 
@@ -16,7 +17,7 @@ int main(int, char **) {
   std::cout << "Enter choice (1-3): ";
   std::cin >> choice;
 
-  if (std::cin.fail() || (choice != 1 && choice != 2)) {
+  if (std::cin.fail() || (choice != 1 && choice != 2 && choice != 3)) {
     std::cerr << "Invalid choice. Exiting.\n";
     return -1;
   }
@@ -34,8 +35,7 @@ int main(int, char **) {
     break;
   case 3:
     std::cout << "Launching Solar System project...\n";
-    // in work
-    // app = new Triangle();
+    app = new SolarSystem();
     break;
   }
 
