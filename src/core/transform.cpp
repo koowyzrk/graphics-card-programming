@@ -4,9 +4,18 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
 
-void Transform::setPosition(const glm::vec3 &pos) { position_ = pos; }
-void Transform::setRotation(const glm::vec3 &rot) { rotation_ = rot; }
-void Transform::setScale(const glm::vec3 &scale) { scale_ = scale; }
+void Transform::setPosition(const glm::vec3 &pos) {
+  position_ = pos;
+  isDirty_ = true;
+}
+void Transform::setRotation(const glm::vec3 &rot) {
+  rotation_ = rot;
+  isDirty_ = true;
+}
+void Transform::setScale(const glm::vec3 &scale) {
+  scale_ = scale;
+  isDirty_ = true;
+}
 
 void Transform::translate(const glm::vec3 &delta) {
   position_ += delta;

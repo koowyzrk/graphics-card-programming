@@ -1,6 +1,7 @@
 #include "graphNode.h"
 
 void GraphNode::addChild(std::shared_ptr<GraphNode> child) {
+  child->parent_ = this;
   children_.push_back(child);
 }
 
@@ -22,17 +23,14 @@ void GraphNode::updateTransform(const glm::mat4 &parentGlobalTransform) {
 void GraphNode::draw(Shader &shader) {
   if (model_) {
     shader.setUniform("model", globalTransform_);
-
-    // glm::mat3 normalMatrix =
-    //     glm::transpose(glm::inverse(glm::mat3(globalTransform_)));
-    // shader.setUniform("normalMatrix", normalMatrix);
-
     model_->draw(shader);
   }
   for (auto &child : children_) {
     child->draw(shader);
   }
 }
+
+GraphNode *GraphNode::getParent() { return parent_; }
 
 glm::vec3 GraphNode::getGlobalPosition() const {
   return glm::vec3(globalTransform_[3]);

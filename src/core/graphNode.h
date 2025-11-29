@@ -9,7 +9,8 @@
 
 class GraphNode {
 public:
-  GraphNode(Model *model = nullptr) : model_(model) {}
+  GraphNode(Model *model = nullptr, GraphNode *parent = nullptr)
+      : model_(model), parent_(parent) {}
   void addChild(std::shared_ptr<GraphNode> child);
 
   void draw(Shader &shader);
@@ -19,11 +20,15 @@ public:
   void updateTransform(const glm::mat4 &parentGlobalTransform);
 
   std::vector<std::shared_ptr<GraphNode>> getChildren();
+
+  GraphNode *getParent();
   glm::vec3 getGlobalPosition() const;
 
 private:
   Model *model_;
   std::vector<std::shared_ptr<GraphNode>> children_;
+
+  GraphNode *parent_ = nullptr;
 
   Transform transform_;
   glm::mat4 globalTransform_ = glm::mat4(1.0f);

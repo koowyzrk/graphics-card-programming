@@ -1,5 +1,5 @@
 #include "solarSystem.h"
-#include <iostream>
+#include <memory>
 
 SolarSystem::SolarSystem() {}
 SolarSystem::~SolarSystem() {}
@@ -8,32 +8,82 @@ void SolarSystem::init_app() {
   std::string resourceDir = "src/apps/solar-system/res/";
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
-  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 5.0f, 15.0f),
+  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 0.0f, 0.0f),
                                            glm::radians(45.0f),
                                            1920.0f / 1080.0f, 0.1f, 100.0f));
 
-  loadedModel_ =
-      std::make_unique<Model>(resourceDir + "models/earth/scene.gltf");
+  sunModel_ = std::make_unique<Model>(resourceDir + "models/sun/scene.gltf");
 
-  // loadedModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+  mercuryModel_ =
+      std::make_unique<Model>(resourceDir + "models/mercury/scene.gltf");
+  venusModel_ =
+      std::make_unique<Model>(resourceDir + "models/venus/scene.gltf");
+
+  earthModel_ =
+      std::make_unique<Model>(resourceDir + "models/earth/scene.gltf");
+  moonModel_ = std::make_unique<Model>(resourceDir + "models/moon/scene.gltf");
+
+  marsModel_ = std::make_unique<Model>(resourceDir + "models/mars/scene.gltf");
+
+  jupiterModel_ =
+      std::make_unique<Model>(resourceDir + "models/jupiter/scene.gltf");
+  jupiterMoonOne_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+
+  saturnModel_ =
+      std::make_unique<Model>(resourceDir + "models/saturn/scene.gltf");
+  saturnMoonOne_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+
+  uranModel_ =
+      std::make_unique<Model>(resourceDir + "models/uranus/scene.gltf");
+  neptuneModel_ =
+      std::make_unique<Model>(resourceDir + "models/neptune/scene.gltf");
+
   orbitModel_ = std::unique_ptr<Model>(generateOrbitModel(64));
-  // generatedSunModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
-  // generatedMoonModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
 
   createScene();
+  GLFWwindow *glfwWin = window->getWindow();
+  glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glEnable(GL_DEPTH_TEST);
 }
 
 void SolarSystem::input() {
   GLFWwindow *glfwWin = window->getWindow();
+  bool tabCurrentlyPressed = (glfwGetKey(glfwWin, GLFW_KEY_TAB) == GLFW_PRESS);
+  if (tabCurrentlyPressed && !tabPressedLastFrame_) {
+    mouseControlEnabled_ = !mouseControlEnabled_;
+    if (mouseControlEnabled_) {
+      glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      firstMouse = true; // Zresetuj flagę, aby uniknąć skoku kamery
+    } else {
+      glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+  }
+  tabPressedLastFrame_ = tabCurrentlyPressed;
+
   if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement ::FORWARD, deltaTime);
+    camera_->processKeyboard(CameraMovement::FORWARD, deltaTime);
   if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement ::BACKWARD, deltaTime);
+    camera_->processKeyboard(CameraMovement::BACKWARD, deltaTime);
   if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement ::RIGHT, deltaTime);
+    camera_->processKeyboard(CameraMovement::RIGHT, deltaTime);
   if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement ::LEFT, deltaTime);
+    camera_->processKeyboard(CameraMovement::LEFT, deltaTime);
+
+  if (mouseControlEnabled_) {
+    double mouseX, mouseY;
+    glfwGetCursorPos(glfwWin, &mouseX, &mouseY);
+
+    if (firstMouse) {
+      lastX = mouseX;
+      lastY = mouseY;
+      firstMouse = false;
+    }
+    float xOffset = mouseX - lastX;
+    float yOffset = lastY - mouseY;
+    lastX = mouseX;
+    lastY = mouseY;
+    camera_->processMouseMovement(xOffset, yOffset);
+  }
 }
 
 void SolarSystem::update() {
@@ -43,11 +93,10 @@ void SolarSystem::update() {
     body.currentOrbitAngle += body.orbitSpeed * dt;
     body.currentSelfAngle += body.selfRotationSpeed * dt;
     if (body.orbitRadius > 0.0f) {
-      float x = glm::cos(body.currentOrbitAngle) * body.orbitRadius;
-      float z = glm::sin(body.currentOrbitAngle) * body.orbitRadius;
+      float angleRad = glm::radians(body.currentOrbitAngle);
+      float x = glm::cos(angleRad) * body.orbitRadius;
+      float z = glm::sin(angleRad) * body.orbitRadius;
       body.node->getTransform().setPosition(glm::vec3(x, 0.0f, z));
-      // std::cout << "New position: (" << x << ", 0.0, " << z << ")" <<
-      // std::endl;
     }
     body.node->getTransform().setRotation(
         glm::vec3(0.0f, body.currentSelfAngle, 0.0f));
@@ -83,42 +132,224 @@ void SolarSystem::render() {
 
 void SolarSystem::render_gui() {
   ImGui::Begin("Controls");
+
+  // wireframe view
+  // rotation of solar system
+  // szzczegolowosc siatki
+
   ImGui::End();
 }
 
 void SolarSystem::createScene() {
   celestialBodies_.clear();
-
   rootNode_ = std::make_shared<GraphNode>(nullptr);
 
-  // auto sunNode = std::make_shared<GraphNode>(generatedSunModel_.get());
-  // sunNode->getTransform().setScale(glm::vec3(3.0f));
-  // rootNode_->addChild(sunNode);
-  //
-  // celestialBodies_.push_back({sunNode, 0.0f, 0.0f, 5.0f});
+  // --- SŁOŃCE ---
+  auto sunNode = std::make_shared<GraphNode>(sunModel_.get());
+  sunNode->getTransform().setScale(glm::vec3(0.2f));
+  rootNode_->addChild(sunNode);
 
-  auto earthNode = std::make_shared<GraphNode>(loadedModel_.get());
-  earthNode->getTransform().setScale(glm::vec3(0.5f));
+  CelestialBody sunData;
+  sunData.node = sunNode;
+  sunData.orbitRadius = 0.0f;
+  sunData.orbitSpeed = 0.0f;
+  sunData.selfRotationSpeed = 2.0f;
+  sunData.orbitColor = glm::vec3(1.0f, 1.0f, 0.0f);
+  celestialBodies_.push_back(sunData);
+
+  // --- MERKURY ---
+  auto mercuryNode = std::make_shared<GraphNode>(mercuryModel_.get());
+  mercuryNode->getTransform().setScale(glm::vec3(0.08f));
+  rootNode_->addChild(mercuryNode);
+
+  CelestialBody mercuryData;
+  mercuryData.node = mercuryNode;
+  mercuryData.orbitRadius = 3.0f;
+  mercuryData.orbitSpeed = 45.0f;
+  mercuryData.selfRotationSpeed = 5.0f;
+  mercuryData.orbitColor = glm::vec3(0.6f, 0.6f, 0.6f);
+  celestialBodies_.push_back(mercuryData);
+
+  // --- WENUS ---
+  auto venusNode = std::make_shared<GraphNode>(venusModel_.get());
+  venusNode->getTransform().setScale(glm::vec3(0.12f));
+  rootNode_->addChild(venusNode);
+
+  CelestialBody venusData;
+  venusData.node = venusNode;
+  venusData.orbitRadius = 4.5f;
+  venusData.orbitSpeed = 35.0f;
+  venusData.selfRotationSpeed = 3.0f;
+  venusData.orbitColor = glm::vec3(0.9f, 0.8f, 0.5f);
+  celestialBodies_.push_back(venusData);
+
+  // --- ZIEMIA ---
+  auto earthNode = std::make_shared<GraphNode>(earthModel_.get());
+  earthNode->getTransform().setScale(glm::vec3(0.13f));
   rootNode_->addChild(earthNode);
 
   CelestialBody earthData;
   earthData.node = earthNode;
-  earthData.orbitRadius = 20.0f;
-  earthData.orbitSpeed = 10.0f;
+  earthData.orbitRadius = 6.0f;
+  earthData.orbitSpeed = 25.0f;
   earthData.selfRotationSpeed = 30.0f;
   earthData.orbitColor = glm::vec3(0.0f, 0.0f, 1.0f);
   celestialBodies_.push_back(earthData);
 
-  // auto moonNode = std::make_shared<GraphNode>(generatedSunModel_.get());
-  // moonNode->getTransform().setScale(glm::vec3(0.2f));
-  // earthNode->addChild(moonNode);
+  // --- KSIĘŻYC (Ziemi) ---
+  auto moonNode = std::make_shared<GraphNode>(moonModel_.get());
+  moonNode->getTransform().setScale(glm::vec3(0.25f));
+  earthNode->addChild(moonNode);
 
-  // CelestialBody moonData;
-  // moonData.node = moonNode;
-  // moonData.orbitRadius = 2.0f;
-  // moonData.orbitSpeed = 50.0f;
-  // moonData.selfRotationSpeed = 0.0f;
-  // celestialBodies_.push_back(moonData);
+  CelestialBody moonData;
+  moonData.node = moonNode;
+  moonData.orbitRadius = 1.8f;
+  moonData.orbitSpeed = 80.0f;
+  moonData.selfRotationSpeed = 0.0f;
+  moonData.orbitColor = glm::vec3(0.5f, 0.5f, 0.5f);
+  celestialBodies_.push_back(moonData);
+
+  // --- MARS ---
+  auto marsNode = std::make_shared<GraphNode>(marsModel_.get());
+  marsNode->getTransform().setScale(glm::vec3(0.1f));
+  rootNode_->addChild(marsNode);
+
+  CelestialBody marsData;
+  marsData.node = marsNode;
+  marsData.orbitRadius = 8.0f;
+  marsData.orbitSpeed = 20.0f;
+  marsData.selfRotationSpeed = 25.0f;
+  marsData.orbitColor = glm::vec3(1.0f, 0.2f, 0.0f);
+  celestialBodies_.push_back(marsData);
+
+  // --- JOWISZ ---
+  auto jupiterNode = std::make_shared<GraphNode>(jupiterModel_.get());
+  jupiterNode->getTransform().setScale(glm::vec3(0.6f));
+  rootNode_->addChild(jupiterNode);
+
+  CelestialBody jupiterData;
+  jupiterData.node = jupiterNode;
+  jupiterData.orbitRadius = 13.0f;
+  jupiterData.orbitSpeed = 12.0f;
+  jupiterData.selfRotationSpeed = 50.0f;
+  jupiterData.orbitColor = glm::vec3(0.8f, 0.5f, 0.3f);
+  celestialBodies_.push_back(jupiterData);
+
+  // Jupiter: 1st moon
+  auto jupiterMoonOneNode = std::make_shared<GraphNode>(jupiterMoonOne_.get());
+  jupiterMoonOneNode->getTransform().setScale(glm::vec3(0.12f));
+  jupiterNode->addChild(jupiterMoonOneNode);
+  CelestialBody jupiterMoonOneData;
+  jupiterMoonOneData.node = jupiterMoonOneNode;
+  jupiterMoonOneData.orbitRadius = 1.8f;
+  jupiterMoonOneData.orbitSpeed = 80.0f;
+  jupiterMoonOneData.selfRotationSpeed = 0.0f;
+  jupiterMoonOneData.orbitColor = glm::vec3(0.9f, 0.8f, 0.0f);
+  celestialBodies_.push_back(jupiterMoonOneData);
+
+  // Jupiter: 2nd moon
+  auto jupiterMoonTwoNode = std::make_shared<GraphNode>(jupiterMoonOne_.get());
+  jupiterMoonTwoNode->getTransform().setScale(glm::vec3(0.1f));
+  jupiterNode->addChild(jupiterMoonTwoNode);
+  CelestialBody jupiterMoonTwoData;
+  jupiterMoonTwoData.node = jupiterMoonTwoNode;
+  jupiterMoonTwoData.orbitRadius = 2.8f;
+  jupiterMoonTwoData.orbitSpeed = 50.0f;
+  jupiterMoonTwoData.selfRotationSpeed = 0.0f;
+  jupiterMoonTwoData.orbitColor = glm::vec3(0.8f, 0.8f, 1.0f);
+  celestialBodies_.push_back(jupiterMoonTwoData);
+
+  // Jupiter: 3th moon
+  auto jupiterMoonThreeNode =
+      std::make_shared<GraphNode>(jupiterMoonOne_.get());
+  jupiterMoonThreeNode->getTransform().setScale(glm::vec3(0.15f));
+  jupiterNode->addChild(jupiterMoonThreeNode);
+
+  CelestialBody jupiterMoonThreeData;
+  jupiterMoonThreeData.node = jupiterMoonThreeNode;
+  jupiterMoonThreeData.orbitRadius = 4.5f;
+  jupiterMoonThreeData.orbitSpeed = 30.0f;
+  jupiterMoonThreeData.selfRotationSpeed = 0.0f;
+  jupiterMoonThreeData.orbitColor = glm::vec3(0.7f, 0.7f, 0.7f);
+  celestialBodies_.push_back(jupiterMoonThreeData);
+
+  // Jupiter: 4th moon
+  auto jupiterMoonFourNode = std::make_shared<GraphNode>(jupiterMoonOne_.get());
+  jupiterMoonFourNode->getTransform().setScale(glm::vec3(0.13f));
+  jupiterNode->addChild(jupiterMoonFourNode);
+
+  CelestialBody jupiterMoonFourData;
+  jupiterMoonFourData.node = jupiterMoonFourNode;
+  jupiterMoonFourData.orbitRadius = 6.0f;
+  jupiterMoonFourData.orbitSpeed = 20.0f;
+  jupiterMoonFourData.selfRotationSpeed = 0.0f;
+  jupiterMoonFourData.orbitColor = glm::vec3(0.5f, 0.4f, 0.3f);
+  celestialBodies_.push_back(jupiterMoonFourData);
+
+  // --- SATURN ---
+  auto saturnNode = std::make_shared<GraphNode>(saturnModel_.get());
+  saturnNode->getTransform().setScale(glm::vec3(0.5f));
+  rootNode_->addChild(saturnNode);
+
+  CelestialBody saturnData;
+  saturnData.node = saturnNode;
+  saturnData.orbitRadius = 17.0f;
+  saturnData.orbitSpeed = 9.0f;
+  saturnData.selfRotationSpeed = 45.0f;
+  saturnData.orbitColor = glm::vec3(0.9f, 0.8f, 0.2f);
+  celestialBodies_.push_back(saturnData);
+
+  // Saturn : first moon
+  auto saturnMoonOneNode = std::make_shared<GraphNode>(saturnMoonOne_.get());
+  saturnMoonOneNode->getTransform().setScale(glm::vec3(0.13f));
+  saturnNode->addChild(saturnMoonOneNode);
+
+  CelestialBody saturnMoonOneData;
+  saturnMoonOneData.node = saturnMoonOneNode;
+  saturnMoonOneData.orbitRadius = 3.0f;
+  saturnMoonOneData.orbitSpeed = 20.0f;
+  saturnMoonOneData.selfRotationSpeed = 0.0f;
+  saturnMoonOneData.orbitColor = glm::vec3(0.5f, 0.4f, 0.3f);
+  celestialBodies_.push_back(saturnMoonOneData);
+
+  // Saturn : second moon
+  auto saturnMoonTwoNode = std::make_shared<GraphNode>(saturnMoonOne_.get());
+  saturnMoonTwoNode->getTransform().setScale(glm::vec3(0.13f));
+  saturnNode->addChild(saturnMoonTwoNode);
+
+  CelestialBody saturnMoonTwoData;
+  saturnMoonTwoData.node = saturnMoonTwoNode;
+  saturnMoonTwoData.orbitRadius = 6.0f;
+  saturnMoonTwoData.orbitSpeed = 20.0f;
+  saturnMoonTwoData.selfRotationSpeed = 0.0f;
+  saturnMoonTwoData.orbitColor = glm::vec3(0.5f, 0.4f, 0.3f);
+  celestialBodies_.push_back(saturnMoonTwoData);
+
+  // --- URAN ---
+  auto uranNode = std::make_shared<GraphNode>(uranModel_.get());
+  uranNode->getTransform().setScale(glm::vec3(0.3f));
+  rootNode_->addChild(uranNode);
+
+  CelestialBody uranData;
+  uranData.node = uranNode;
+  uranData.orbitRadius = 22.0f;
+  uranData.orbitSpeed = 6.0f;
+  uranData.selfRotationSpeed = 20.0f;
+  uranData.orbitColor = glm::vec3(0.0f, 1.0f, 1.0f);
+  celestialBodies_.push_back(uranData);
+
+  // --- NEPTUN ---
+  auto neptuneNode = std::make_shared<GraphNode>(neptuneModel_.get());
+  neptuneNode->getTransform().setScale(glm::vec3(0.3f));
+  rootNode_->addChild(neptuneNode);
+
+  CelestialBody neptuneData;
+  neptuneData.node = neptuneNode;
+  neptuneData.orbitRadius = 26.0f;
+  neptuneData.orbitSpeed = 4.0f;
+  neptuneData.selfRotationSpeed = 22.0f;
+  neptuneData.orbitColor = glm::vec3(0.0f, 0.0f, 0.8f);
+  celestialBodies_.push_back(neptuneData);
 }
 
 void SolarSystem::drawOrbits() {
@@ -133,14 +364,24 @@ void SolarSystem::drawOrbits() {
       continue;
 
     glm::mat4 orbitModelMatrix = glm::mat4(1.0f);
-
     glm::vec3 centerPos = glm::vec3(0.0f);
 
+    float visualRadius = body.orbitRadius;
+    GraphNode *parentNode = body.node->getParent();
+
+    if (parentNode && parentNode != rootNode_.get()) {
+      centerPos = parentNode->getGlobalPosition();
+      glm::vec3 parentScale = parentNode->getTransform().getScale();
+      float parentUniformScale = parentScale.x;
+
+      visualRadius *= parentUniformScale;
+    }
     orbitModelMatrix = glm::translate(orbitModelMatrix, centerPos);
-    orbitModelMatrix =
-        glm::scale(orbitModelMatrix, glm::vec3(body.orbitRadius));
+    orbitModelMatrix = glm::scale(orbitModelMatrix, glm::vec3(visualRadius));
 
     shader_->setUniform("model", orbitModelMatrix);
+    // shader_->setUniform("objectColor", body.orbitColor);
+
     orbitModel_->draw(*shader_);
   }
 }
@@ -218,7 +459,7 @@ Model *SolarSystem::generateSphereModel(GLuint sectorCount, GLuint stackCount) {
 
 Model *SolarSystem::generateOrbitModel(int segments) {
   std::vector<Vertex> orbitVertices;
-  std::vector<unsigned int> indices; // This was empty before!
+  std::vector<unsigned int> indices;
   const float radius = 1.0f;
   const float step = 2 * M_PI / segments;
 
