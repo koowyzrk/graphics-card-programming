@@ -16,6 +16,7 @@ public:
                              float bottom, float top, float zNear = 0.1f,
                              float zFar = 100.0f);
 
+  glm::vec3 getPosition() const { return position_; }
   glm::mat4 getViewMatrix() const;
   glm::mat4 getProjection() const { return projection_; }
 

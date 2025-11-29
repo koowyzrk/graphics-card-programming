@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 std::string Utils::getFileContent(const std::filesystem::path &filename) {

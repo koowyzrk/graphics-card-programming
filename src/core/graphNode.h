@@ -6,19 +6,19 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include <vector>
+
 class GraphNode {
 public:
   GraphNode(Model *model = nullptr) : model_(model) {}
   void addChild(std::shared_ptr<GraphNode> child);
-  std::vector<std::shared_ptr<GraphNode>> getChildren();
+
+  void draw(Shader &shader);
 
   // transform section
   Transform &getTransform();
   void updateTransform(const glm::mat4 &parentGlobalTransform);
-  //
 
-  void draw(Shader &shader);
-
+  std::vector<std::shared_ptr<GraphNode>> getChildren();
   glm::vec3 getGlobalPosition() const;
 
 private:

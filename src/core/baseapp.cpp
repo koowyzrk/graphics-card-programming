@@ -15,10 +15,17 @@ void BaseApp::init(unsigned int width, unsigned int height,
 }
 void BaseApp::run() {
   is_running = true;
+  double lastTime = glfwGetTime();
   while (is_running) {
     if (window->shouldClose()) {
       is_running = false;
     }
+
+    // calculating deltaTime
+    double currentTime = glfwGetTime();
+    deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+
     gui->begin();
     input();
     update();

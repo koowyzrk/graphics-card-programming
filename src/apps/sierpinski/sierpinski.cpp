@@ -128,9 +128,9 @@ void Sierpinski::render() {
   glBindTexture(GL_TEXTURE_2D, texture);
 
   // calculating delta time
-  float currentFrame = glfwGetTime();
-  deltaTime = currentFrame - lastFrame;
-  lastFrame = currentFrame;
+  // float currentFrame = glfwGetTime();
+  // deltaTime = currentFrame - lastFrame;
+  // lastFrame = currentFrame;
   //
 
   shader->use();

@@ -1,4 +1,5 @@
 #include "solarSystem.h"
+#include <iostream>
 
 SolarSystem::SolarSystem() {}
 SolarSystem::~SolarSystem() {}
@@ -7,19 +8,33 @@ void SolarSystem::init_app() {
   std::string resourceDir = "src/apps/solar-system/res/";
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
-  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 0.0f, 3.0f),
+  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 5.0f, 15.0f),
                                            glm::radians(45.0f),
                                            1920.0f / 1080.0f, 0.1f, 100.0f));
 
   loadedModel_ =
       std::make_unique<Model>(resourceDir + "models/earth/scene.gltf");
-  generatedSunModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
-  generatedMoonModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+
+  // loadedModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+  orbitModel_ = std::unique_ptr<Model>(generateOrbitModel(64));
+  // generatedSunModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
+  // generatedMoonModel_ = std::unique_ptr<Model>(generateSphereModel(32, 32));
 
   createScene();
+  glEnable(GL_DEPTH_TEST);
 }
 
-void SolarSystem::input() {}
+void SolarSystem::input() {
+  GLFWwindow *glfwWin = window->getWindow();
+  if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
+    camera_->processKeyboard(CameraMovement ::FORWARD, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
+    camera_->processKeyboard(CameraMovement ::BACKWARD, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+    camera_->processKeyboard(CameraMovement ::RIGHT, deltaTime);
+  if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
+    camera_->processKeyboard(CameraMovement ::LEFT, deltaTime);
+}
 
 void SolarSystem::update() {
   float dt = deltaTime * globalSpeedMultiplier_;
@@ -28,9 +43,11 @@ void SolarSystem::update() {
     body.currentOrbitAngle += body.orbitSpeed * dt;
     body.currentSelfAngle += body.selfRotationSpeed * dt;
     if (body.orbitRadius > 0.0f) {
-      float x = cos(glm::radians(body.currentOrbitAngle)) * body.orbitRadius;
-      float z = sin(glm::radians(body.currentOrbitAngle)) * body.orbitRadius;
+      float x = glm::cos(body.currentOrbitAngle) * body.orbitRadius;
+      float z = glm::sin(body.currentOrbitAngle) * body.orbitRadius;
       body.node->getTransform().setPosition(glm::vec3(x, 0.0f, z));
+      // std::cout << "New position: (" << x << ", 0.0, " << z << ")" <<
+      // std::endl;
     }
     body.node->getTransform().setRotation(
         glm::vec3(0.0f, body.currentSelfAngle, 0.0f));
@@ -41,6 +58,9 @@ void SolarSystem::update() {
 }
 
 void SolarSystem::render() {
+  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   glm::mat4 view = camera_->getViewMatrix();
   glm::mat4 projection = camera_->getProjection();
 
@@ -61,18 +81,21 @@ void SolarSystem::render() {
   drawOrbits();
 }
 
-void SolarSystem::render_gui() {}
+void SolarSystem::render_gui() {
+  ImGui::Begin("Controls");
+  ImGui::End();
+}
 
 void SolarSystem::createScene() {
   celestialBodies_.clear();
 
   rootNode_ = std::make_shared<GraphNode>(nullptr);
 
-  auto sunNode = std::make_shared<GraphNode>(generatedSunModel_.get());
-  sunNode->getTransform().setScale(glm::vec3(3.0f));
-  rootNode_->addChild(sunNode);
-
-  celestialBodies_.push_back({sunNode, 0.0f, 0.0f, 5.0f});
+  // auto sunNode = std::make_shared<GraphNode>(generatedSunModel_.get());
+  // sunNode->getTransform().setScale(glm::vec3(3.0f));
+  // rootNode_->addChild(sunNode);
+  //
+  // celestialBodies_.push_back({sunNode, 0.0f, 0.0f, 5.0f});
 
   auto earthNode = std::make_shared<GraphNode>(loadedModel_.get());
   earthNode->getTransform().setScale(glm::vec3(0.5f));
@@ -80,22 +103,22 @@ void SolarSystem::createScene() {
 
   CelestialBody earthData;
   earthData.node = earthNode;
-  earthData.orbitRadius = 10.0f;
+  earthData.orbitRadius = 20.0f;
   earthData.orbitSpeed = 10.0f;
   earthData.selfRotationSpeed = 30.0f;
   earthData.orbitColor = glm::vec3(0.0f, 0.0f, 1.0f);
   celestialBodies_.push_back(earthData);
 
-  auto moonNode = std::make_shared<GraphNode>(generatedSunModel_.get());
-  moonNode->getTransform().setScale(glm::vec3(0.2f));
-  earthNode->addChild(moonNode);
+  // auto moonNode = std::make_shared<GraphNode>(generatedSunModel_.get());
+  // moonNode->getTransform().setScale(glm::vec3(0.2f));
+  // earthNode->addChild(moonNode);
 
-  CelestialBody moonData;
-  moonData.node = moonNode;
-  moonData.orbitRadius = 2.0f;
-  moonData.orbitSpeed = 50.0f;
-  moonData.selfRotationSpeed = 0.0f;
-  celestialBodies_.push_back(moonData);
+  // CelestialBody moonData;
+  // moonData.node = moonNode;
+  // moonData.orbitRadius = 2.0f;
+  // moonData.orbitSpeed = 50.0f;
+  // moonData.selfRotationSpeed = 0.0f;
+  // celestialBodies_.push_back(moonData);
 }
 
 void SolarSystem::drawOrbits() {
@@ -110,27 +133,14 @@ void SolarSystem::drawOrbits() {
       continue;
 
     glm::mat4 orbitModelMatrix = glm::mat4(1.0f);
-    glm::vec3 centerPos = glm::vec3(0.0f);
 
-    if (body.node->getTransform().getPosition() != glm::vec3(0.0f)) {
-      if (body.node->getChildren().empty()) {
-        if (body.orbitRadius == 2.0f) {
-          for (const auto &otherBody : celestialBodies_) {
-            if (otherBody.orbitRadius == 10.0f) {
-              centerPos = otherBody.node->getGlobalPosition();
-              break;
-            }
-          }
-        }
-      }
-    }
+    glm::vec3 centerPos = glm::vec3(0.0f);
 
     orbitModelMatrix = glm::translate(orbitModelMatrix, centerPos);
     orbitModelMatrix =
         glm::scale(orbitModelMatrix, glm::vec3(body.orbitRadius));
 
     shader_->setUniform("model", orbitModelMatrix);
-    shader_->setUniform("objectColor", body.orbitColor);
     orbitModel_->draw(*shader_);
   }
 }
@@ -208,9 +218,11 @@ Model *SolarSystem::generateSphereModel(GLuint sectorCount, GLuint stackCount) {
 
 Model *SolarSystem::generateOrbitModel(int segments) {
   std::vector<Vertex> orbitVertices;
+  std::vector<unsigned int> indices; // This was empty before!
   const float radius = 1.0f;
   const float step = 2 * M_PI / segments;
 
+  // Create vertices for the orbit circle
   for (int i = 0; i <= segments; ++i) {
     float angle = i * step;
     float x = radius * cosf(angle);
@@ -224,10 +236,15 @@ Model *SolarSystem::generateOrbitModel(int segments) {
     orbitVertices.push_back(v);
   }
 
-  std::vector<unsigned int> indices;
-  std::vector<Texture> textures;
+  // Create line strip indices
+  for (int i = 0; i < segments; ++i) {
+    indices.push_back(i);
+    indices.push_back(i + 1);
+  }
 
+  std::vector<Texture> textures;
   Mesh mesh(orbitVertices, indices, textures);
+  mesh.setDrawMode(GL_LINES);
 
   Model *model = new Model();
   model->addMesh(mesh);

@@ -2,7 +2,7 @@
 #include "core/shader.h"
 #include <cstddef>
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures)
     : vertices_(vertices), indices_(indices), textures_(textures) {
   setupMesh();
@@ -44,12 +44,12 @@ void Mesh::setupMesh() {
 
 void Mesh::draw(Shader &shader) const {
   // binding textures
-  GLuint diffuse = 1;
-  GLuint specular = 1;
-  GLuint normal = 1;
-  GLuint height = 1;
+  unsigned int diffuse = 1;
+  unsigned int specular = 1;
+  unsigned int normal = 1;
+  unsigned int height = 1;
 
-  for (GLuint i = 0; i < textures_.size(); i++) {
+  for (unsigned int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);
     std::string number;
     std::string type = textures_[i].type;
@@ -67,8 +67,10 @@ void Mesh::draw(Shader &shader) const {
   }
   // draw mesh
   glBindVertexArray(VAO);
-  glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices_.size()),
+  glDrawElements(drawMode_, static_cast<unsigned int>(indices_.size()),
                  GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
   glActiveTexture(GL_TEXTURE0);
 }
+
+void Mesh::setDrawMode(GLenum drawMode) { drawMode_ = drawMode; }

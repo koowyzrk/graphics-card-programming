@@ -8,6 +8,7 @@
 #include "glm/ext/vector_float2.hpp"
 #include <cstring>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,7 @@ Model::Model() {}
 Model::Model(const std::string &path) { loadModel(path); }
 
 void Model::draw(Shader &shader) {
-  for (GLuint i = 0; i < meshes_.size(); i++) {
+  for (unsigned int i = 0; i < meshes_.size(); i++) {
     meshes_[i].draw(shader);
   }
 }
@@ -35,27 +36,34 @@ void Model::loadModel(const std::string &path) {
     std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
     exit(EXIT_FAILURE);
   }
+
+  std::cout << "Model loaded successfully: " << scene->mNumMeshes << " meshes, "
+            << scene->mNumMaterials << " materials" << std::endl;
+
   directory_ = path.substr(0, path.find_last_of('/'));
   processNode(scene->mRootNode, scene);
+
+  std::cout << "Processed model: " << meshes_.size() << " meshes created"
+            << std::endl;
 }
 
 void Model::processNode(aiNode *node, const aiScene *scene) {
-  for (GLuint i = 0; i < node->mNumMeshes; i++) {
+  for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
     meshes_.push_back(processMesh(mesh, scene));
   }
 
-  for (GLuint i = 0; i < node->mNumChildren; i++) {
+  for (unsigned int i = 0; i < node->mNumChildren; i++) {
     processNode(node->mChildren[i], scene);
   }
 }
 
 Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
   std::vector<Vertex> vertices;
-  std::vector<GLuint> indices;
+  std::vector<unsigned int> indices;
   std::vector<Texture> textures;
 
-  for (GLuint i = 0; i < mesh->mNumVertices; i++) {
+  for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex vertex;
     glm::vec3 vector;
 
@@ -94,9 +102,9 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
   }
 
   // indicies
-  for (GLuint i = 0; i < mesh->mNumFaces; i++) {
+  for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace face = mesh->mFaces[i];
-    for (GLuint j = 0; j < face.mNumIndices; j++) {
+    for (unsigned int j = 0; j < face.mNumIndices; j++) {
       indices.push_back(face.mIndices[j]);
     }
   }
@@ -113,11 +121,11 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
   textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
   std::vector<Texture> normalMaps =
-      loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+      loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
   textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 
   std::vector<Texture> heightMaps =
-      loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+      loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_height");
   textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
   return Mesh(vertices, indices, textures);
@@ -127,12 +135,12 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat,
                                                  aiTextureType type,
                                                  const std::string &typeName) {
   std::vector<Texture> textures;
-  for (GLuint i = 0; i < mat->GetTextureCount(type); i++) {
+  for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
     bool skip = false;
     aiString str;
     mat->GetTexture(type, i, &str);
 
-    for (GLuint j = 0; j < texturesLoaded_.size(); j++) {
+    for (unsigned int j = 0; j < texturesLoaded_.size(); j++) {
       if (std::strcmp(texturesLoaded_[j].path.data(), str.C_Str()) == 0) {
         textures.push_back(texturesLoaded_[j]);
         skip = true;
@@ -156,7 +164,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat,
 }
 
 GLuint Model::textureFromFile(const char *path, const std::string &directory) {
-  std::string filename = std::string(path);
+  std::string filename = "/" + std::string(path);
 
   GLuint textureID;
   glGenTextures(1, &textureID);
@@ -166,7 +174,6 @@ GLuint Model::textureFromFile(const char *path, const std::string &directory) {
       Utils::loadTexture(directory, filename, &width, &height, &nrChannels);
 
   if (data) {
-
     GLenum format;
     if (nrChannels == 1)
       format = GL_RED;
@@ -176,7 +183,7 @@ GLuint Model::textureFromFile(const char *path, const std::string &directory) {
       format = GL_RGBA;
 
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                  GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 

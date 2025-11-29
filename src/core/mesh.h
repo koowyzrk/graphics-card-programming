@@ -24,12 +24,14 @@ public:
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
        std::vector<Texture> textures);
   void draw(Shader &shader) const;
+  void setDrawMode(GLenum drawMode);
 
 private:
   unsigned int VAO, VBO, EBO;
   std::vector<Vertex> vertices_;
-  std::vector<GLuint> indices_;
+  std::vector<unsigned int> indices_;
   std::vector<Texture> textures_;
+  GLenum drawMode_ = GL_TRIANGLES;
 
   void setupMesh();
 };
