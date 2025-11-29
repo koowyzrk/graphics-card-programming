@@ -5,6 +5,7 @@
 #include "core/transform.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include <vector>
 
 class GraphNode {
@@ -21,7 +22,9 @@ public:
 
   std::vector<std::shared_ptr<GraphNode>> getChildren();
 
+  Model *getModel();
   GraphNode *getParent();
+  glm::mat4 getGlobalTransform();
   glm::vec3 getGlobalPosition() const;
 
 private:

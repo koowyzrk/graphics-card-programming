@@ -1,5 +1,4 @@
 #include "solarSystem.h"
-#include <memory>
 
 SolarSystem::SolarSystem() {}
 SolarSystem::~SolarSystem() {}
@@ -102,6 +101,8 @@ void SolarSystem::update() {
         glm::vec3(0.0f, body.currentSelfAngle, 0.0f));
   }
   if (rootNode_) {
+    rootNode_->getTransform().setRotation(
+        glm::vec3(0.0f, sceneRotationAngle_, 0.0f));
     rootNode_->updateTransform(glm::mat4(1.0f));
   }
 }
@@ -122,8 +123,25 @@ void SolarSystem::render() {
   else
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-  if (rootNode_) {
-    rootNode_->draw(*shader_);
+  // if (rootNode_) {
+  //   shader_->setUniform("useTexture", true);
+  //   rootNode_->draw(*shader_);
+  // }
+
+  for (const auto &body : celestialBodies_) {
+    if (!body.node || !body.node->getModel())
+      continue;
+
+    shader_->setUniform("model", body.node->getGlobalTransform());
+    bool isGeneratedMoon = (body.node->getModel() == jupiterMoonOne_.get() ||
+                            body.node->getModel() == saturnMoonOne_.get());
+    shader_->setUniform("objectColor", body.orbitColor);
+    if (isGeneratedMoon) {
+      shader_->setUniform("useTexture", false);
+    } else {
+      shader_->setUniform("useTexture", true);
+    }
+    body.node->getModel()->draw(*shader_);
   }
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -134,8 +152,22 @@ void SolarSystem::render_gui() {
   ImGui::Begin("Controls");
 
   // wireframe view
+  if (ImGui::Checkbox("Tryb Siatki (Wireframe)", &wireframeMode_)) {
+    ;
+  }
+  // spppeeed
+  ImGui::Separator();
+  ImGui::SliderFloat("Predkosc Symulacji", &globalSpeedMultiplier_, 0.0f, 10.0f,
+                     "%.1f x");
   // rotation of solar system
+  ImGui::Separator();
+  ImGui::SliderFloat("Obrot Układu Slonecznego (Y)", &sceneRotationAngle_, 0.0f,
+                     360.0f, "%.1f deg");
   // szzczegolowosc siatki
+  if (ImGui::SliderInt("Segmenty Sfery/Orbity", &currentTessellation_, 8,
+                       128)) {
+    regenerateGeneratedModels();
+  }
 
   ImGui::End();
 }
@@ -358,6 +390,7 @@ void SolarSystem::drawOrbits() {
 
   glLineWidth(1.0f);
   shader_->use();
+  shader_->setUniform("useTexture", false);
 
   for (const auto &body : celestialBodies_) {
     if (body.orbitRadius <= 0.0f)
@@ -380,7 +413,7 @@ void SolarSystem::drawOrbits() {
     orbitModelMatrix = glm::scale(orbitModelMatrix, glm::vec3(visualRadius));
 
     shader_->setUniform("model", orbitModelMatrix);
-    // shader_->setUniform("objectColor", body.orbitColor);
+    shader_->setUniform("objectColor", body.orbitColor);
 
     orbitModel_->draw(*shader_);
   }
@@ -490,4 +523,18 @@ Model *SolarSystem::generateOrbitModel(int segments) {
   Model *model = new Model();
   model->addMesh(mesh);
   return model;
+}
+
+void SolarSystem::regenerateGeneratedModels() {
+  jupiterMoonOne_.reset();
+  saturnMoonOne_.reset();
+
+  GLuint tessellation = static_cast<GLuint>(currentTessellation_);
+
+  jupiterMoonOne_ =
+      std::unique_ptr<Model>(generateSphereModel(tessellation, tessellation));
+  saturnMoonOne_ =
+      std::unique_ptr<Model>(generateSphereModel(tessellation, tessellation));
+
+  createScene();
 }

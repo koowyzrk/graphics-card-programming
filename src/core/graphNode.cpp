@@ -1,4 +1,5 @@
 #include "graphNode.h"
+#include "glm/ext/vector_float4.hpp"
 
 void GraphNode::addChild(std::shared_ptr<GraphNode> child) {
   child->parent_ = this;
@@ -30,7 +31,9 @@ void GraphNode::draw(Shader &shader) {
   }
 }
 
+Model *GraphNode::getModel() { return model_; }
 GraphNode *GraphNode::getParent() { return parent_; }
+glm::mat4 GraphNode::getGlobalTransform() { return globalTransform_; }
 
 glm::vec3 GraphNode::getGlobalPosition() const {
   return glm::vec3(globalTransform_[3]);

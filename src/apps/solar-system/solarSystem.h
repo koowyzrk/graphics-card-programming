@@ -65,12 +65,14 @@ private:
 
   bool wireframeMode_ = false;
   float globalSpeedMultiplier_ = 1.0f;
-  int sphereDetail_ = 32;
+  float sceneRotationAngle_ = 0.0f;
+  int currentTessellation_ = 32;
 
   void drawOrbits();
   void createScene();
   Model *generateSphereModel(GLuint sectorCount, GLuint stackCount);
   Model *generateOrbitModel(int segments);
+  void regenerateGeneratedModels();
 
   // mouse control
   bool mouseControlEnabled_ = true;
