@@ -2,6 +2,7 @@
 #include "core/baseapp.h"
 #include "core/camera.h"
 #include "core/graphNode.h"
+#include "core/skybox.h"
 #include <memory>
 
 struct House {
@@ -25,6 +26,7 @@ private:
   std::shared_ptr<GraphNode> rootNode_;
   Shader *shader_ = nullptr;
   Camera *camera_ = nullptr;
+  SkyBox *skybox_ = nullptr;
 
   // HousingEstate
   std::vector<House> houses_;

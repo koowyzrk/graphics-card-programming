@@ -13,9 +13,17 @@ void HousingEstate::init_app() {
                        resourceDir + "shaders/basic.frag");
   camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 20.0f, 0.0f),
                                            glm::radians(45.0f),
-                                           1920.0f / 1080.0f, 0.1f, 100.0f));
-  createScene();
+                                           1920.0f / 1080.0f, 0.1f, 1000.0f));
 
+  // skybox
+  std::vector<std::string> faces = {"right.jpg",  "left.jpg",  "top.jpg",
+                                    "bottom.jpg", "front.jpg", "back.jpg"};
+  skybox_ = new SkyBox("src/apps/housing-estate/res/textures/skybox", faces,
+                       "src/apps/housing-estate/res/shaders/skybox.vert",
+                       "src/apps/housing-estate/res/shaders/skybox.frag");
+  //
+
+  createScene();
   GLFWwindow *glfwWin = window->getWindow();
   glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glEnable(GL_DEPTH_TEST);
@@ -29,7 +37,7 @@ void HousingEstate::input() {
     mouseControlEnabled_ = !mouseControlEnabled_;
     if (mouseControlEnabled_) {
       glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      firstMouse = true; // Zresetuj flagę, aby uniknąć skoku kamery
+      firstMouse = true;
     } else {
       glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
@@ -77,6 +85,8 @@ void HousingEstate::render() {
 
   glm::mat4 view = camera_->getViewMatrix();
   glm::mat4 projection = camera_->getProjection();
+
+  skybox_->draw(view, projection);
 
   shader_->use();
   shader_->setUniform("view", view);
