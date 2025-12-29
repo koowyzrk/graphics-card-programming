@@ -107,13 +107,25 @@ void HousingEstate::render_gui() {
 void HousingEstate::createScene() {
   rootNode_ = std::make_shared<GraphNode>();
 
-  // PLANE BASE FOR HOUSES
   std::string textureDir = "src/apps/housing-estate/res/textures";
-  std::string textureFile = "grass.jpg";
-  Model *planeModel = generatePlaneModel(200.0f, textureDir, textureFile);
+  Model *planeModel = generatePlaneModel(200.0f, textureDir, "grass.jpg");
+  Model *wallModel = generateCubeModel(5.0f, textureDir);
+  Model *roofModel = generatePyramidModel(6.0f, textureDir, "roof.jpg");
+
   auto planeNode = std::make_shared<GraphNode>(planeModel);
   rootNode_->addChild(planeNode);
-  //
+
+  auto houseRoot = std::make_shared<GraphNode>();
+  houseRoot->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
+
+  auto walls = std::make_shared<GraphNode>(wallModel);
+  houseRoot->addChild(walls);
+
+  auto roof = std::make_shared<GraphNode>(roofModel);
+  roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
+  houseRoot->addChild(roof);
+
+  rootNode_->addChild(houseRoot);
 }
 
 Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
@@ -147,5 +159,74 @@ Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
 
   Mesh mesh(vertices, indices, textures);
   model->addMesh(mesh);
+  return model;
+}
+
+Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
+  Model *model = new Model();
+  float s = size / 2.0f;
+
+  auto addFace = [&](std::vector<glm::vec3> pos, glm::vec3 norm,
+                     std::string texFile) {
+    std::vector<Vertex> v;
+    v.push_back({pos[0], norm, {0, 0}, {1, 0, 0}});
+    v.push_back({pos[1], norm, {1, 0}, {1, 0, 0}});
+    v.push_back({pos[2], norm, {1, 1}, {1, 0, 0}});
+    v.push_back({pos[3], norm, {0, 1}, {1, 0, 0}});
+
+    std::vector<unsigned int> ind = {0, 1, 2, 0, 2, 3};
+    std::vector<Texture> textures;
+    Texture t;
+    t.id = model->textureFromFile(texFile.c_str(), textureDir);
+    t.type = "texture_diffuse";
+    textures.push_back(t);
+
+    model->addMesh(Mesh(v, ind, textures));
+  };
+
+  addFace({{-s, -s, s}, {s, -s, s}, {s, s, s}, {-s, s, s}}, {0, 0, 1},
+          "red_brick_door.jpg");
+  addFace({{-s, -s, -s}, {-s, s, -s}, {s, s, -s}, {s, -s, -s}}, {0, 0, -1},
+          "red_brick.jpg");
+  addFace({{-s, -s, -s}, {-s, -s, s}, {-s, s, s}, {-s, s, -s}}, {-1, 0, 0},
+          "red_brick_window.jpg");
+  addFace({{s, -s, -s}, {s, s, -s}, {s, s, s}, {s, -s, s}}, {1, 0, 0},
+          "red_brick_window.jpg");
+
+  return model;
+}
+
+Model *HousingEstate::generatePyramidModel(float size, std::string textureDir,
+                                           std::string textureFile) {
+  Model *model = new Model();
+  std::vector<Vertex> vertices;
+  float h = size * 0.8f;
+  float s = size / 2.0f;
+  glm::vec3 peak(0.0f, h, 0.0f);
+
+  auto addFace = [&](glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+    glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
+    vertices.push_back({p1, normal, {0.0f, 0.0f}, {1, 0, 0}});
+    vertices.push_back({p2, normal, {1.0f, 0.0f}, {1, 0, 0}});
+    vertices.push_back({p3, normal, {0.5f, 1.0f}, {1, 0, 0}});
+  };
+
+  addFace({-s, 0, s}, {s, 0, s}, peak);   // Przód
+  addFace({s, 0, s}, {s, 0, -s}, peak);   // Prawo
+  addFace({s, 0, -s}, {-s, 0, -s}, peak); // Tył
+  addFace({-s, 0, -s}, {-s, 0, s}, peak); // Lewo
+
+  std::vector<unsigned int> indices;
+  for (unsigned int i = 0; i < vertices.size(); i++)
+    indices.push_back(i);
+
+  std::vector<Texture> textures;
+  Texture tex;
+  tex.id = model->textureFromFile(textureFile.c_str(), textureDir);
+  tex.type = "texture_diffuse";
+  tex.path = textureFile;
+  textures.push_back(tex);
+
+  model->addMesh(Mesh(vertices, indices, textures));
   return model;
 }

@@ -34,8 +34,9 @@ private:
 
   Model *generatePlaneModel(float size, std::string textureDir,
                             std::string textureFile);
-  Model *generateCubeModel();
-  Model *generatePyramidModel();
+  Model *generateCubeModel(float size, std::string textureDir);
+  Model *generatePyramidModel(float size, std::string textureDir,
+                              std::string textureFile);
   //
 
   // mouse control

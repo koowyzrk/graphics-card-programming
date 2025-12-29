@@ -83,11 +83,9 @@ unsigned int SkyBox::loadCubeMap(const std::string &directory,
 }
 
 void SkyBox::draw(const glm::mat4 &view, const glm::mat4 &projection) {
-  glDepthFunc(
-      GL_LEQUAL); // Zmiana na LEQUAL, aby sześcian narysował się na z=1.0
+  glDepthFunc(GL_LEQUAL);
   shader_->use();
 
-  // Usuwamy translację z macierzy widoku
   glm::mat4 viewStatic = glm::mat4(glm::mat3(view));
   shader_->setUniform("view", viewStatic);
   shader_->setUniform("projection", projection);
@@ -97,5 +95,5 @@ void SkyBox::draw(const glm::mat4 &view, const glm::mat4 &projection) {
   glBindTexture(GL_TEXTURE_CUBE_MAP, textureID_);
   glDrawArrays(GL_TRIANGLES, 0, 36);
   glBindVertexArray(0);
-  glDepthFunc(GL_LESS); // Powrót do domyślnego
+  glDepthFunc(GL_LESS);
 }
