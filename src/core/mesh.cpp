@@ -49,7 +49,9 @@ void Mesh::draw(Shader &shader) const {
   unsigned int normal = 1;
   unsigned int height = 1;
 
-  for (unsigned int i = 0; i < textures_.size(); i++) {
+  // GL_INVALID_OPERATION error generated. <apiElementType> value is invalid;
+  // expected GL_INT or GL_UNSIGNED_INT64_NV
+  for (int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);
     std::string number;
     std::string type = textures_[i].type;

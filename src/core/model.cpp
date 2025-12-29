@@ -12,6 +12,12 @@
 #include <string>
 #include <vector>
 
+glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4 &from) {
+  return glm::mat4(from.a1, from.b1, from.c1, from.d1, from.a2, from.b2,
+                   from.c2, from.d2, from.a3, from.b3, from.c3, from.d3,
+                   from.a4, from.b4, from.c4, from.d4);
+}
+
 Model::Model() {}
 
 Model::Model(const std::string &path) { loadModel(path); }
@@ -27,12 +33,13 @@ void Model::addMesh(Mesh mesh) { meshes_.push_back(mesh); }
 void Model::loadModel(const std::string &path) {
   Assimp::Importer importer;
 
+  // wczytanie pliku i postprocessing w assimpie
   const aiScene *scene = importer.ReadFile(
       path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
                 aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-      !scene->mRootNode) // if is Not Zero
-  {
+      !scene->mRootNode) {
     std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -40,68 +47,79 @@ void Model::loadModel(const std::string &path) {
   std::cout << "Model loaded successfully: " << scene->mNumMeshes << " meshes, "
             << scene->mNumMaterials << " materials" << std::endl;
 
+  // sciezka katalogu do ladowania tekstur
   directory_ = path.substr(0, path.find_last_of('/'));
-  processNode(scene->mRootNode, scene);
 
+  // rekurencyjne przetwarzanie wezla sceny, zaczynacaj od roota
+  processNode(scene->mRootNode, scene, glm::mat4(1.0f));
   std::cout << "Processed model: " << meshes_.size() << " meshes created"
             << std::endl;
 }
 
-void Model::processNode(aiNode *node, const aiScene *scene) {
+void Model::processNode(aiNode *node, const aiScene *scene,
+                        const glm::mat4 &parentTransform) {
+  // pobranie lokalnej transformacji dla prawidlowego polozenia obiektu
+  glm::mat4 nodeTransform = aiMatrix4x4ToGlm(node->mTransformation);
+  // poloczenie jej z transformacja rodzica, najpierw lokalna pozniej rodzica
+  glm::mat4 globalTransform = parentTransform * nodeTransform;
+
+  // przetwarzanie wszystkich siatek do biezacego wezla
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes_.push_back(processMesh(mesh, scene));
+    meshes_.push_back(processMesh(mesh, scene, globalTransform));
   }
-
+  // rekurencyjne przetwarzanie dzieci wezla z podawaniem transformacji
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    processNode(node->mChildren[i], scene);
+    processNode(node->mChildren[i], scene, globalTransform);
   }
 }
 
-Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
+// przetwarzanie pojedynczej siatki
+Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene,
+                        const glm::mat4 &transform) {
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   std::vector<Texture> textures;
 
+  // uzywana do transformacji wektorow normalnych
+  glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform)));
+
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex vertex;
-    glm::vec3 vector;
 
-    // position
-    vector.x = mesh->mVertices[i].x;
-    vector.y = mesh->mVertices[i].y;
-    vector.z = mesh->mVertices[i].z;
-    vertex.position = vector;
+    // transformacja wierzchołka z przestrzeni lokalnej mesha do przestrzeni
+    // globalnej modelu
+    glm::vec4 position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y,
+                                   mesh->mVertices[i].z, 1.0f);
+    position = transform * position;
+    vertex.position = glm::vec3(position);
 
-    // normals
+    // transformacja normalnych za pomoca macierzy transformacji
     if (mesh->HasNormals()) {
-      vector.x = mesh->mNormals[i].x;
-      vector.y = mesh->mNormals[i].y;
-      vector.z = mesh->mNormals[i].z;
-      vertex.normal = vector;
+      glm::vec3 normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y,
+                                   mesh->mNormals[i].z);
+      vertex.normal = glm::normalize(normalMatrix * normal);
     }
 
-    // texture cords
+    // Texture coordinates
     if (mesh->HasTextureCoords(0)) {
-      glm::vec2 texVec;
-      texVec.x = mesh->mTextureCoords[0][i].x;
-      texVec.y = mesh->mTextureCoords[0][i].y;
-      vertex.texCords = texVec;
+      vertex.texCords =
+          glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
 
+      // Tangents with transformation
       if (mesh->HasTangentsAndBitangents()) {
-        vector.x = mesh->mTangents[i].x;
-        vector.y = mesh->mTangents[i].y;
-        vector.z = mesh->mTangents[i].z;
-        vertex.tangent = vector;
+        glm::vec3 tangent = glm::vec3(
+            mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+        vertex.tangent = glm::normalize(normalMatrix * tangent);
       }
     } else {
-      vertex.texCords = glm::vec2(0.0, 0.0);
+      vertex.texCords = glm::vec2(0.0f, 0.0f);
     }
 
     vertices.push_back(vertex);
   }
 
-  // indicies
+  // polaczenie wierzchołkow
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace face = mesh->mFaces[i];
     for (unsigned int j = 0; j < face.mNumIndices; j++) {
@@ -109,7 +127,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
     }
   }
 
-  // process materials (textures)
+  // Process materials (textures)
   aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
   std::vector<Texture> diffuseMaps =
@@ -131,15 +149,18 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
   return Mesh(vertices, indices, textures);
 }
 
+// ladowanie tekstur z materialu
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat,
                                                  aiTextureType type,
                                                  const std::string &typeName) {
   std::vector<Texture> textures;
+  // iteracja przez wszystkie tekstury
   for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
     bool skip = false;
     aiString str;
     mat->GetTexture(type, i, &str);
 
+    // sprawdzenie czy tekstura o tej sciezce nie została już załadowana
     for (unsigned int j = 0; j < texturesLoaded_.size(); j++) {
       if (std::strcmp(texturesLoaded_[j].path.data(), str.C_Str()) == 0) {
         textures.push_back(texturesLoaded_[j]);

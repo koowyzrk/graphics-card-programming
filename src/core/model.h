@@ -21,8 +21,10 @@ private:
   std::string directory_;
 
   void loadModel(const std::string &path);
-  void processNode(aiNode *node, const aiScene *scene);
-  Mesh processMesh(aiMesh *mesh, const aiScene *scene);
+  void processNode(aiNode *node, const aiScene *scene,
+                   const glm::mat4 &parentTransform);
+  Mesh processMesh(aiMesh *mesh, const aiScene *scene,
+                   const glm::mat4 &transform);
 
   std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                             const std::string &typeName);

@@ -7,6 +7,8 @@
 
 struct CelestialBody {
   std::shared_ptr<GraphNode> node;
+  std::shared_ptr<GraphNode> tiltNode;
+  std::shared_ptr<GraphNode> rotationNode;
 
   float orbitRadius = 0.0f;
   float orbitSpeed = 0.0f;
@@ -14,6 +16,8 @@ struct CelestialBody {
 
   float currentOrbitAngle = 0.0f;
   float currentSelfAngle = 0.0f;
+
+  float axialTilt = 0.0f;
 
   glm::vec3 orbitColor = glm::vec3(1.0f);
 };
