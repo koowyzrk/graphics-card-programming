@@ -4,6 +4,11 @@
 #include "core/graphNode.h"
 #include <memory>
 
+struct House {
+  std::shared_ptr<GraphNode> node;
+  std::shared_ptr<GraphNode> rotationNode;
+};
+
 class HousingEstate : public BaseApp {
 public:
   HousingEstate();
@@ -22,8 +27,13 @@ private:
   Camera *camera_ = nullptr;
 
   // HousingEstate
-  std::vector<GraphNode> houses_; // for a moment
+  std::vector<House> houses_;
   void createScene();
+
+  Model *generatePlaneModel(float size, std::string textureDir,
+                            std::string textureFile);
+  Model *generateCubeModel();
+  Model *generatePyramidModel();
   //
 
   // mouse control
@@ -32,4 +42,5 @@ private:
   double lastX = 0.0;
   double lastY = 0.0;
   bool firstMouse = true;
+  float cameraSpeed = 10.0f;
 };

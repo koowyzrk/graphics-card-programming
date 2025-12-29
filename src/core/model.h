@@ -14,6 +14,7 @@ public:
   void draw(Shader &shader);
 
   void addMesh(Mesh mesh);
+  GLuint textureFromFile(const char *path, const std::string &directory);
 
 private:
   std::vector<Mesh> meshes_;
@@ -28,5 +29,4 @@ private:
 
   std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                             const std::string &typeName);
-  GLuint textureFromFile(const char *path, const std::string &directory);
 };
