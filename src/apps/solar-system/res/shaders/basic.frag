@@ -1,17 +1,17 @@
 #version 330 core
-out vec4 FragColor;
+out vec4 fragcolor;
 
-in vec2 TexCoord;
-uniform sampler2D texture_diffuse1;
+in vec2 texcoord;
+uniform sampler2d texture_diffuse1;
 
-uniform vec3 objectColor;
-uniform bool useTexture;
+uniform vec3 objectcolor;
+uniform bool usetexture;
 
 void main()
 {
-    if (useTexture) {
-        FragColor = texture(texture_diffuse1, TexCoord);
+    if (usetexture) {
+        fragcolor = texture(texture_diffuse1, texcoord);
     } else {
-        FragColor = vec4(objectColor, 1.0);
+        fragcolor = vec4(objectcolor, 1.0);
     }
 }

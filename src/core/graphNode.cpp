@@ -1,5 +1,4 @@
 #include "graphNode.h"
-#include "glm/ext/vector_float4.hpp"
 
 void GraphNode::addChild(std::shared_ptr<GraphNode> child) {
   child->parent_ = this;
