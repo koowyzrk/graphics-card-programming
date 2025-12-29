@@ -28,6 +28,8 @@ void Model::draw(Shader &shader) {
   }
 }
 
+std::vector<Mesh> Model::getMeshes() { return meshes_; }
+
 void Model::addMesh(Mesh mesh) { meshes_.push_back(mesh); }
 
 void Model::loadModel(const std::string &path) {

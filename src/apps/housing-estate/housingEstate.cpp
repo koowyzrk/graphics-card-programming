@@ -3,6 +3,7 @@
 #include "core/mesh.h"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include <memory>
 
 HousingEstate::HousingEstate() {}
 HousingEstate::~HousingEstate() {}
@@ -23,7 +24,7 @@ void HousingEstate::init_app() {
                        "src/apps/housing-estate/res/shaders/skybox.frag");
   //
 
-  createScene();
+  createScene(25);
   GLFWwindow *glfwWin = window->getWindow();
   glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glEnable(GL_DEPTH_TEST);
@@ -71,12 +72,22 @@ void HousingEstate::input() {
 }
 
 void HousingEstate::update() {
-  float dt = deltaTime;
-  for (auto &house : houses_) {
-  }
   if (rootNode_) {
     rootNode_->updateTransform(glm::mat4(1.0f));
   }
+
+  // std::vector<glm::mat4> wallMatrices;
+  // std::vector<glm::mat4> roofMatrices;
+  //
+  // if (!houses_.empty()) {
+  //   Model *wModel = houses_[0].wall->getModel();
+  //   Model *rModel = houses_[0].roof->getModel();
+  //
+  //   for (auto &mesh : wModel->getMeshes())
+  //     mesh.updateInstanceBuffer(wallMatrices);
+  //   for (auto &mesh : rModel->getMeshes())
+  //     mesh.updateInstanceBuffer(roofMatrices);
+  // }
 }
 
 void HousingEstate::render() {
@@ -92,9 +103,24 @@ void HousingEstate::render() {
   shader_->setUniform("view", view);
   shader_->setUniform("projection", projection);
 
+  shader_->setUniform("isInstanced", false);
   if (rootNode_) {
     rootNode_->draw(*shader_);
   }
+
+  if (!houses_.empty()) {
+    shader_->setUniform("isInstanced", true);
+    unsigned int count = (unsigned int)houses_.size();
+    Model *wModel = houses_[0].wall->getModel();
+    for (auto &mesh : wModel->getMeshes()) {
+      mesh.drawInstanced(*shader_, count);
+    }
+    Model *rModel = houses_[0].roof->getModel();
+    for (auto &mesh : rModel->getMeshes()) {
+      mesh.drawInstanced(*shader_, count);
+    }
+  }
+  shader_->setUniform("isInstanced", false);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
@@ -104,7 +130,7 @@ void HousingEstate::render_gui() {
   ImGui::End();
 }
 
-void HousingEstate::createScene() {
+void HousingEstate::createScene(int houseCount) {
   rootNode_ = std::make_shared<GraphNode>();
 
   std::string textureDir = "src/apps/housing-estate/res/textures";
@@ -112,20 +138,35 @@ void HousingEstate::createScene() {
   Model *wallModel = generateCubeModel(5.0f, textureDir);
   Model *roofModel = generatePyramidModel(6.0f, textureDir, "roof.jpg");
 
+  for (auto &mesh : wallModel->getMeshes())
+    mesh.setupInstancing(houseCount * houseCount);
+  for (auto &mesh : roofModel->getMeshes())
+    mesh.setupInstancing(houseCount * houseCount);
+
   auto planeNode = std::make_shared<GraphNode>(planeModel);
   rootNode_->addChild(planeNode);
 
-  auto houseRoot = std::make_shared<GraphNode>();
-  houseRoot->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
+  float spacing = 15.0f;
+  float offset = (houseCount - 1) * spacing / 2.0f;
 
-  auto walls = std::make_shared<GraphNode>(wallModel);
-  houseRoot->addChild(walls);
+  for (int i = 0; i < houseCount; i++) {
+    for (int j = 0; j < houseCount; j++) {
+      auto houseRoot = std::make_shared<GraphNode>();
+      float posX = i * spacing - offset;
+      float posZ = j * spacing - offset;
+      houseRoot->getTransform().setPosition(glm::vec3(posX, 2.5f, posZ));
 
-  auto roof = std::make_shared<GraphNode>(roofModel);
-  roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
-  houseRoot->addChild(roof);
+      auto walls = std::make_shared<GraphNode>(wallModel);
+      houseRoot->addChild(walls);
 
-  rootNode_->addChild(houseRoot);
+      auto roof = std::make_shared<GraphNode>(roofModel);
+      roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
+      houseRoot->addChild(roof);
+
+      rootNode_->addChild(houseRoot);
+      houses_.push_back({houseRoot, walls, roof});
+    }
+  }
 }
 
 Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
@@ -169,10 +210,10 @@ Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
   auto addFace = [&](std::vector<glm::vec3> pos, glm::vec3 norm,
                      std::string texFile) {
     std::vector<Vertex> v;
-    v.push_back({pos[0], norm, {0, 0}, {1, 0, 0}});
-    v.push_back({pos[1], norm, {1, 0}, {1, 0, 0}});
-    v.push_back({pos[2], norm, {1, 1}, {1, 0, 0}});
-    v.push_back({pos[3], norm, {0, 1}, {1, 0, 0}});
+    v.push_back({pos[0], norm, {0, 1}, {1, 0, 0}});
+    v.push_back({pos[1], norm, {1, 1}, {1, 0, 0}});
+    v.push_back({pos[2], norm, {1, 0}, {1, 0, 0}});
+    v.push_back({pos[3], norm, {0, 0}, {1, 0, 0}});
 
     std::vector<unsigned int> ind = {0, 1, 2, 0, 2, 3};
     std::vector<Texture> textures;

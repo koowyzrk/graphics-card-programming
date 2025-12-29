@@ -13,6 +13,8 @@ public:
   Model(const std::string &path);
   void draw(Shader &shader);
 
+  std::vector<Mesh> getMeshes();
+
   void addMesh(Mesh mesh);
   GLuint textureFromFile(const char *path, const std::string &directory);
 

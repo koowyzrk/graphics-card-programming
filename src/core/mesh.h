@@ -24,10 +24,16 @@ public:
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
        std::vector<Texture> textures);
   void draw(Shader &shader) const;
+
+  void setupInstancing(unsigned int instancesCount);
+  void drawInstanced(Shader &shader, unsigned int instancesCount) const;
+  void updateInstanceBuffer(const std::vector<glm::mat4> &matrices);
+
   void setDrawMode(GLenum drawMode);
 
 private:
   unsigned int VAO, VBO, EBO;
+  unsigned int instanceVBO;
   std::vector<Vertex> vertices_;
   std::vector<unsigned int> indices_;
   std::vector<Texture> textures_;

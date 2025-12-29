@@ -6,8 +6,9 @@
 #include <memory>
 
 struct House {
-  std::shared_ptr<GraphNode> node;
-  std::shared_ptr<GraphNode> rotationNode;
+  std::shared_ptr<GraphNode> root;
+  std::shared_ptr<GraphNode> wall;
+  std::shared_ptr<GraphNode> roof;
 };
 
 class HousingEstate : public BaseApp {
@@ -30,7 +31,7 @@ private:
 
   // HousingEstate
   std::vector<House> houses_;
-  void createScene();
+  void createScene(int houseCount);
 
   Model *generatePlaneModel(float size, std::string textureDir,
                             std::string textureFile);

@@ -42,6 +42,23 @@ void Mesh::setupMesh() {
   glBindVertexArray(0);
 }
 
+void Mesh::setupInstancing(unsigned int instancesCount) {
+  glBindVertexArray(VAO);
+  glGenBuffers(1, &instanceVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+  glBufferData(GL_ARRAY_BUFFER, instancesCount * sizeof(glm::mat4), nullptr,
+               GL_DYNAMIC_DRAW);
+
+  for (int i = 0; i < 4; i++) {
+    glEnableVertexAttribArray(4 + i);
+    glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4),
+                          (void *)(i * sizeof(glm::vec4)));
+    glVertexAttribDivisor(4 + i, 1);
+  }
+
+  glBindVertexArray(0);
+}
+
 void Mesh::draw(Shader &shader) const {
   // binding textures
   unsigned int diffuse = 1;
@@ -73,6 +90,43 @@ void Mesh::draw(Shader &shader) const {
                  GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
   glActiveTexture(GL_TEXTURE0);
+}
+
+void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
+  unsigned int diffuse = 1;
+  unsigned int specular = 1;
+  unsigned int normal = 1;
+  unsigned int height = 1;
+
+  for (int i = 0; i < textures_.size(); i++) {
+    glActiveTexture(GL_TEXTURE0 + i);
+    std::string number;
+    std::string type = textures_[i].type;
+    if (type == "texture_diffuse")
+      number = std::to_string(diffuse++);
+    else if (type == "texture_specular")
+      number = std::to_string(specular++);
+    else if (type == "texture_normal")
+      number = std::to_string(normal++);
+    else if (type == "texture_height")
+      number = std::to_string(height++);
+
+    shader.setUniform((type + number).c_str(), i);
+    glBindTexture(GL_TEXTURE_2D, textures_[i].id);
+  }
+  glBindVertexArray(VAO);
+  glDrawElementsInstanced(GL_TRIANGLES,
+                          static_cast<unsigned int>(indices_.size()),
+                          GL_UNSIGNED_INT, 0, instanceCount);
+  glBindVertexArray(0);
+}
+
+void Mesh::updateInstanceBuffer(const std::vector<glm::mat4> &matrices) {
+  glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+  // Przesyłamy aktualne macierze do GPU
+  glBufferSubData(GL_ARRAY_BUFFER, 0, matrices.size() * sizeof(glm::mat4),
+                  &matrices[0]);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Mesh::setDrawMode(GLenum drawMode) { drawMode_ = drawMode; }
