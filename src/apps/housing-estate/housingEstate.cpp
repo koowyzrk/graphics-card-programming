@@ -12,9 +12,9 @@ void HousingEstate::init_app() {
   std::string resourceDir = "src/apps/housing-estate/res/";
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
-  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 20.0f, 0.0f),
+  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 70.0f, 0.0f),
                                            glm::radians(45.0f),
-                                           1920.0f / 1080.0f, 0.1f, 1000.0f));
+                                           1920.0f / 1080.0f, 0.1f, 10000.0f));
 
   // skybox
   std::vector<std::string> faces = {"right.jpg",  "left.jpg",  "top.jpg",
@@ -24,7 +24,8 @@ void HousingEstate::init_app() {
                        "src/apps/housing-estate/res/shaders/skybox.frag");
   //
 
-  createScene(25);
+  createScene(125);
+
   GLFWwindow *glfwWin = window->getWindow();
   glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glEnable(GL_DEPTH_TEST);
@@ -76,18 +77,24 @@ void HousingEstate::update() {
     rootNode_->updateTransform(glm::mat4(1.0f));
   }
 
-  // std::vector<glm::mat4> wallMatrices;
-  // std::vector<glm::mat4> roofMatrices;
-  //
-  // if (!houses_.empty()) {
-  //   Model *wModel = houses_[0].wall->getModel();
-  //   Model *rModel = houses_[0].roof->getModel();
-  //
-  //   for (auto &mesh : wModel->getMeshes())
-  //     mesh.updateInstanceBuffer(wallMatrices);
-  //   for (auto &mesh : rModel->getMeshes())
-  //     mesh.updateInstanceBuffer(roofMatrices);
-  // }
+  std::vector<glm::mat4> wallMatrices;
+  std::vector<glm::mat4> roofMatrices;
+  wallMatrices.reserve(houses_.size());
+  roofMatrices.reserve(houses_.size());
+
+  for (const auto &house : houses_) {
+    wallMatrices.push_back(house.wall->getGlobalTransform());
+    roofMatrices.push_back(house.roof->getGlobalTransform());
+  }
+
+  if (!houses_.empty()) {
+    Model *wModel = houses_[0].wall->getModel();
+    for (auto &mesh : wModel->getMeshes())
+      mesh.updateInstanceBuffer(wallMatrices);
+    Model *rModel = houses_[0].roof->getModel();
+    for (auto &mesh : rModel->getMeshes())
+      mesh.updateInstanceBuffer(roofMatrices);
+  }
 }
 
 void HousingEstate::render() {
@@ -126,7 +133,9 @@ void HousingEstate::render() {
 }
 
 void HousingEstate::render_gui() {
-  ImGui::Begin("Controls");
+  ImGui::Begin("Performance");
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
 }
 
@@ -134,7 +143,7 @@ void HousingEstate::createScene(int houseCount) {
   rootNode_ = std::make_shared<GraphNode>();
 
   std::string textureDir = "src/apps/housing-estate/res/textures";
-  Model *planeModel = generatePlaneModel(200.0f, textureDir, "grass.jpg");
+  Model *planeModel = generatePlaneModel(1000.0f, textureDir, "grass.jpg");
   Model *wallModel = generateCubeModel(5.0f, textureDir);
   Model *roofModel = generatePyramidModel(6.0f, textureDir, "roof.jpg");
 
@@ -157,9 +166,13 @@ void HousingEstate::createScene(int houseCount) {
       houseRoot->getTransform().setPosition(glm::vec3(posX, 2.5f, posZ));
 
       auto walls = std::make_shared<GraphNode>(wallModel);
+      // walls->setIsInstancedRendering(false);
+      walls->setIsInstancedRendering(true);
       houseRoot->addChild(walls);
 
       auto roof = std::make_shared<GraphNode>(roofModel);
+      // roof->setIsInstancedRendering(false);
+      roof->setIsInstancedRendering(true);
       roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
       houseRoot->addChild(roof);
 

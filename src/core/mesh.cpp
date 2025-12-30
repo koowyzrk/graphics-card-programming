@@ -123,7 +123,6 @@ void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
 
 void Mesh::updateInstanceBuffer(const std::vector<glm::mat4> &matrices) {
   glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-  // Przesyłamy aktualne macierze do GPU
   glBufferSubData(GL_ARRAY_BUFFER, 0, matrices.size() * sizeof(glm::mat4),
                   &matrices[0]);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
