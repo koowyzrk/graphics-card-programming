@@ -24,6 +24,23 @@ void HousingEstate::init_app() {
                        "src/apps/housing-estate/res/shaders/skybox.frag");
   //
 
+  // lights
+  lights.push_back({"directional", LightType::DIRECTIONAL});
+  lights.back().getTransform().setRotation(
+      glm::radians(glm::vec3(-45.0f, -45.0f, 0.0f)));
+
+  lights.push_back({"spotlight_1", LightType::SPOT});
+  lights.back().getTransform().setPosition(glm::vec3(-20, 10, 0));
+
+  lights.push_back({"spotlight_2", LightType::SPOT});
+  lights.back().getTransform().setPosition(glm::vec3(20, 10, 0));
+
+  lights.push_back({"point", LightType::POINT});
+
+  std::string textureDir = "src/apps/housing-estate/res/textures";
+  lightVisualModel = generateCubeModel(1.0f, textureDir);
+  //
+
   createScene(125);
 
   GLFWwindow *glfwWin = window->getWindow();
@@ -95,6 +112,16 @@ void HousingEstate::update() {
     for (auto &mesh : rModel->getMeshes())
       mesh.updateInstanceBuffer(roofMatrices);
   }
+
+  // lights
+  float time = (float)glfwGetTime();
+  for (auto &l : lights) {
+    if (l.getName() == "point") {
+      l.getTransform().setPosition(
+          glm::vec3(sin(time) * 50.0f, 30.0f, cos(time) * 50.0f));
+    }
+  }
+  //
 }
 
 void HousingEstate::render() {
@@ -109,6 +136,35 @@ void HousingEstate::render() {
   shader_->use();
   shader_->setUniform("view", view);
   shader_->setUniform("projection", projection);
+  shader_->setUniform("viewPos", camera_->getPosition());
+
+  // lights
+  int activeLights = std::min((int)lights.size(), 10);
+  for (int i = 0; i < activeLights; i++) {
+    lights[i].sendToShader(*shader_, i);
+  }
+  shader_->setUniform("lightCount", activeLights);
+
+  shader_->use();
+  shader_->setUniform("isLightSource", true); // Flaga dla shadera
+  shader_->setUniform("isInstanced", false);
+
+  for (auto &l : lights) {
+    if (!l.isEnabled())
+      continue;
+    glm::mat4 modelMat = l.getTransform().getLocalMatrix();
+    if (l.getType() == LightType::DIRECTIONAL) {
+      modelMat =
+          glm::translate(glm::mat4(1.0f), glm::vec3(0, 100, 0)) * modelMat;
+    }
+    shader_->setUniform("model", modelMat);
+    shader_->setUniform("lightVisualColor", l.getColor());
+
+    lightVisualModel->draw(*shader_);
+  }
+
+  shader_->setUniform("isLightSource", false);
+  //
 
   shader_->setUniform("isInstanced", false);
   if (rootNode_) {
@@ -133,9 +189,91 @@ void HousingEstate::render() {
 }
 
 void HousingEstate::render_gui() {
-  ImGui::Begin("Performance");
+  ImGui::Begin("Housing Estate");
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  if (ImGui::CollapsingHeader("Object Selection",
+                              ImGuiTreeNodeFlags_DefaultOpen)) {
+    int maxIdx = static_cast<int>(houses_.size()) - 1;
+    ImGui::SliderInt("House Index", &selectedHouseIndex, 0, maxIdx);
+    ImGui::RadioButton("Whole House/Walls", (int *)&editHouse, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("Roof Only", (int *)&editHouse, 1);
+  }
+
+  if (!houses_.empty() && selectedHouseIndex >= 0 &&
+      selectedHouseIndex < houses_.size()) {
+    ImGui::Separator();
+    ImGui::Text("Editing House: %d", selectedHouseIndex);
+    std::shared_ptr<GraphNode> targetNode =
+        editHouse ? houses_[selectedHouseIndex].roof
+                  : houses_[selectedHouseIndex].root;
+
+    Transform &trans = targetNode->getTransform();
+
+    glm::vec3 pos = trans.getPosition();
+    glm::vec3 rot = glm::degrees(trans.getRotation());
+    glm::vec3 scl = trans.getScale();
+
+    if (ImGui::DragFloat3("Position", &pos.x, 0.1f)) {
+      trans.setPosition(pos);
+    }
+    if (ImGui::DragFloat3("Rotation", &rot.x, 1.0f)) {
+      trans.setRotation(glm::radians(rot));
+    }
+    if (ImGui::DragFloat3("Scale", &scl.x, 0.05f, 0.01f, 10.0f)) {
+      trans.setScale(scl);
+    }
+  }
+
+  if (ImGui::CollapsingHeader("Lighting System")) {
+    for (auto &l : lights) {
+      if (ImGui::TreeNode(l.getName().c_str())) {
+
+        bool enabled = l.isEnabled();
+        if (ImGui::Checkbox("Enabled", &enabled)) {
+          l.setEnabled(enabled);
+        }
+
+        glm::vec3 color = l.getColor();
+        if (ImGui::ColorEdit3("Color", &color[0])) {
+          l.setColor(color);
+        }
+
+        float intensity = l.getIntensity();
+        if (ImGui::SliderFloat("Intensity", &intensity, 0.0f, 10.0f)) {
+          l.setIntensity(intensity);
+        }
+
+        Transform &trans = l.getTransform();
+
+        if (l.getType() == LightType::DIRECTIONAL ||
+            l.getType() == LightType::SPOT) {
+          glm::vec3 rot = trans.getRotation();
+          if (ImGui::DragFloat3("Direction (Rotation)", &rot.x, 1.0f)) {
+            trans.setRotation(rot);
+          }
+        }
+
+        if (l.getType() == LightType::POINT || l.getType() == LightType::SPOT) {
+          glm::vec3 pos = trans.getPosition();
+          if (ImGui::DragFloat3("Position", &pos.x, 0.1f)) {
+            trans.setPosition(pos);
+          }
+        }
+
+        if (l.getType() == LightType::SPOT) {
+          float cut = l.getCutOff();
+          if (ImGui::SliderFloat("Cutoff Angle", &cut, 0.0f, 45.0f)) {
+            l.setCutOff(cut);
+          }
+        }
+
+        ImGui::TreePop();
+      }
+    }
+  }
+
   ImGui::End();
 }
 

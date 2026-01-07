@@ -30,6 +30,11 @@ void Transform::rotate(const glm::vec3 &delta) {
 const glm::vec3 &Transform::getPosition() const { return position_; }
 const glm::vec3 &Transform::getRotation() const { return rotation_; }
 const glm::vec3 &Transform::getScale() const { return scale_; }
+glm::vec3 Transform::getForward() {
+  glm::vec3 direction =
+      glm::normalize(glm::vec3(getLocalMatrix() * glm::vec4(0, 0, -1, 0)));
+  return direction;
+}
 
 const glm::mat4 &Transform::getLocalMatrix() {
   if (isDirty_) {

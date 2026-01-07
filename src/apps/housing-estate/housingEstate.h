@@ -2,6 +2,7 @@
 #include "core/baseapp.h"
 #include "core/camera.h"
 #include "core/graphNode.h"
+#include "core/light.h"
 #include "core/skybox.h"
 #include <memory>
 
@@ -30,6 +31,9 @@ private:
   SkyBox *skybox_ = nullptr;
 
   // HousingEstate
+  int selectedHouseIndex = 0;
+  bool editHouse = false;
+
   std::vector<House> houses_;
   void createScene(int houseCount);
 
@@ -40,11 +44,16 @@ private:
                               std::string textureFile);
   //
 
+  // lights
+  std::vector<Light> lights;
+  Model *lightVisualModel;
+  //
+
   // mouse control
   bool mouseControlEnabled_ = true;
   bool tabPressedLastFrame_ = false;
   double lastX = 0.0;
   double lastY = 0.0;
   bool firstMouse = true;
-  float cameraSpeed = 10.0f;
+  float cameraSpeed = 50.0f;
 };

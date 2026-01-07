@@ -18,6 +18,7 @@ public:
   const glm::vec3 &getPosition() const;
   const glm::vec3 &getRotation() const;
   const glm::vec3 &getScale() const;
+  glm::vec3 getForward();
 
   const glm::mat4 &getLocalMatrix();
 
