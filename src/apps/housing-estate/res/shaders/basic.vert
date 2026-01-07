@@ -19,7 +19,7 @@ void main()
     mat4 finalModel = isInstanced ? instanceMatrix : model;
     
     FragPos = vec3(finalModel * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(finalModel))) * aNormal;  
+    Normal = mat3(finalModel) * aNormal;
     TexCoords = aTexCoords;
     
     gl_Position = projection * view * vec4(FragPos, 1.0);

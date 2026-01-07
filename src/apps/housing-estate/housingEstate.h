@@ -32,6 +32,7 @@ private:
 
   // HousingEstate
   int selectedHouseIndex = 0;
+  bool bufferUpdate = true;
   bool editHouse = false;
 
   std::vector<House> houses_;
@@ -45,7 +46,12 @@ private:
   //
 
   // lights
-  std::vector<Light> lights;
+  std::shared_ptr<GraphNode> lightsRoot;
+  std::vector<std::shared_ptr<LightNode>> lights;
+  Light *directional_ = nullptr;
+  Light *spotlight1_ = nullptr;
+  Light *spotlight2_ = nullptr;
+  Light *point_ = nullptr;
   Model *lightVisualModel;
   //
 

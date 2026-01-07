@@ -1,4 +1,6 @@
 #pragma once
+#include "core/graphNode.h"
+#include "core/model.h"
 #include "core/shader.h"
 #include "core/transform.h"
 #include "glm/ext/vector_float3.hpp"
@@ -10,15 +12,15 @@ class Light {
 public:
   Light(std::string name, LightType type);
 
-  void sendToShader(Shader &shader, int index);
+  void sendToShader(Shader &shader, int index, Transform &worldTransform);
 
   const std::string &getName() const { return name_; }
   LightType getType() const { return type_; }
   bool isEnabled() const { return enabled_; }
   const glm::vec3 &getColor() const { return color_; }
   float getIntensity() const { return intensity_; }
-  Transform &getTransform() { return transform_; }
-  const Transform &getTransform() const { return transform_; }
+  // Transform &getTransform() { return transform_; }
+  // const Transform &getTransform() const { return transform_; }
   float getRange() const { return range_; }
   float getCutOff() const { return cutOff_; }
   float getOuterCutOff() const { return outerCutOff_; }
@@ -38,7 +40,7 @@ private:
   glm::vec3 color_ = glm::vec3(1.0f);
   float intensity_ = 1.0f;
 
-  Transform transform_;
+  // Transform transform_;
 
   // POINT AND SPOT
   float range_ = 50.0f;
@@ -46,4 +48,24 @@ private:
   // SPOT
   float cutOff_ = 10.0f;
   float outerCutOff_ = 20.0f;
+};
+
+class LightNode : public GraphNode {
+public:
+  LightNode(const Light &light, Model *model = nullptr)
+      : light_(light), GraphNode(model) {}
+  Light &getLight() { return light_; }
+
+  void draw(Shader &shader) override {
+    if (getModel()) {
+      shader.setUniform("isLightSource", true);
+      shader.setUniform("lightVisualColor", light_.getColor());
+
+      GraphNode::draw(shader);
+      shader.setUniform("isLightSource", false);
+    }
+  }
+
+private:
+  Light light_;
 };
