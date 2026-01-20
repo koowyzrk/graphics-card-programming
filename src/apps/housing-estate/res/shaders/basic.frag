@@ -33,15 +33,22 @@ vec3 calculateLight(Light light, vec3 normal, vec3 viewDir, vec3 texColor) {
     float intensity = 1.0;
 
     if (light.type == 0) {
+        // wektor do światła
         lightDir = normalize(-light.direction);
     } else {
         lightDir = normalize(light.position - FragPos);
+        
+        // obliczanie prostszego dystansu liniowo nie jako kwadrat odległości 
+        // uzywamy tlumienia zeby swiatlo zniklo po przekroczeniu okreslonego dystansu
         float distance = length(light.position - FragPos);
         attenuation = clamp(1.0 - distance / light.range, 0.0, 1.0);
         
         if (light.type == 2) {
+            // cosinus kąta między kierunkiem latarki a kierunkiem do fragmentu.
             float theta = dot(lightDir, normalize(-light.direction));
+            // różnica między cosinusami kątów wewnętrznego i zewnętrznego.
             float epsilon = light.cutOff - light.outerCutOff;
+            // wygladzanie na brzegach
             intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
         }
     }
@@ -50,7 +57,11 @@ vec3 calculateLight(Light light, vec3 normal, vec3 viewDir, vec3 texColor) {
     vec3 diffuse = light.color * diff * texColor;
 
     // (Blinn-Phong)
+    // główna różnica między modelem Phonga a Blinn-Phonga. 
+    // zamiast liczyć wektor odbicia 
+    // liczymy wektor dokładnie w połowie drogi między kierunkiem do światła a kierunkiem do kamery
     vec3 halfwayDir = normalize(lightDir + viewDir);
+    // pow - mnoznik odblasku - wieksza wartosc ostry punkt
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
     vec3 specular = light.color * spec * 0.5; 
 
@@ -67,6 +78,7 @@ void main() {
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 texColor = texture(texture_diffuse1, TexCoords).rgb;
     
+    // ambient
     vec3 result = vec3(0.1) * texColor; 
 
     for(int i = 0; i < lightCount; i++) {

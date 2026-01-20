@@ -25,6 +25,7 @@ public:
        std::vector<Texture> textures);
   void draw(Shader &shader) const;
 
+  // instanced
   void setupInstancing(unsigned int instancesCount);
   void drawInstanced(Shader &shader, unsigned int instancesCount) const;
   void updateInstanceBuffer(const std::vector<glm::mat4> &matrices);
