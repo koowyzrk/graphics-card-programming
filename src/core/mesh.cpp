@@ -46,13 +46,19 @@ void Mesh::setupInstancing(unsigned int instancesCount) {
   glBindVertexArray(VAO);
   glGenBuffers(1, &instanceVBO);
   glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+
+  // dodanie macierzy do atrybutów instancji - macierz transformacji
   glBufferData(GL_ARRAY_BUFFER, instancesCount * sizeof(glm::mat4), nullptr,
                GL_DYNAMIC_DRAW);
 
+  // konfiguracja atrybutów 4,5,6,7 (vec4)
   for (int i = 0; i < 4; i++) {
     glEnableVertexAttribArray(4 + i);
     glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4),
                           (void *)(i * sizeof(glm::vec4)));
+    // atrybutów zmienia sie co jedna instancje, przy rysowaniu jednego modelu
+    // korzysta z tej samej macierzy, przy rysowaniu kolejnego pobiera nowa
+    // macierz
     glVertexAttribDivisor(4 + i, 1);
   }
 
@@ -115,6 +121,8 @@ void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
     glBindTexture(GL_TEXTURE_2D, textures_[i].id);
   }
   glBindVertexArray(VAO);
+  // wysylamy sygnal do GPU zeby narysowal obiekty wyslane do instancjonowania
+  // konkretna ilosc razy
   glDrawElementsInstanced(GL_TRIANGLES,
                           static_cast<unsigned int>(indices_.size()),
                           GL_UNSIGNED_INT, 0, instanceCount);
@@ -123,6 +131,7 @@ void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
 
 void Mesh::updateInstanceBuffer(const std::vector<glm::mat4> &matrices) {
   glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+  // przesyłanie konkretnej macierzy dla obiektu do konkretnego bufora
   glBufferSubData(GL_ARRAY_BUFFER, 0, matrices.size() * sizeof(glm::mat4),
                   &matrices[0]);
   glBindBuffer(GL_ARRAY_BUFFER, 0);

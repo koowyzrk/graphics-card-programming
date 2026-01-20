@@ -322,6 +322,7 @@ void HousingEstate::createScene(int houseCount) {
   lightsRoot->addChild(lightPointNode);
   //
 
+  //
   for (auto &mesh : wallModel->getMeshes())
     mesh.setupInstancing(houseCount * houseCount);
   for (auto &mesh : roofModel->getMeshes())
@@ -336,6 +337,16 @@ void HousingEstate::createScene(int houseCount) {
       float posX = i * spacing - offset;
       float posZ = j * spacing - offset;
       houseRoot->getTransform().setPosition(glm::vec3(posX, 2.5f, posZ));
+
+      if (i % 2) {
+        if (!(j % 2))
+          houseRoot->getTransform().setScale(glm::vec3(2.0f, 2.0f, 2.0f));
+      }
+
+      if (!(i % 2)) {
+        if ((j % 2))
+          houseRoot->getTransform().setScale(glm::vec3(2.0f, 2.0f, 2.0f));
+      }
 
       auto walls = std::make_shared<GraphNode>(wallModel);
       // walls->setIsInstancedRendering(false);
