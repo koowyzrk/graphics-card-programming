@@ -56,7 +56,7 @@ public:
       : light_(light), GraphNode(model) {}
   Light &getLight() { return light_; }
 
-  void draw(Shader &shader) override {
+  void draw(Shader &shader, bool skip) override {
     if (getModel()) {
       shader.setUniform("isLightSource", true);
       shader.setUniform("lightVisualColor", light_.getColor());

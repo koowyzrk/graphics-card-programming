@@ -37,9 +37,11 @@ private:
   SkyBox *skybox_ = nullptr;
 
   // InteractiveScene
+  std::shared_ptr<GraphNode> reflectiveNode_;
+  std::shared_ptr<GraphNode> refractionNode_;
+
   std::unique_ptr<Model> cube_;
   std::unique_ptr<Model> character_;
-
   //
 
   // HousingEstate

@@ -1,12 +1,17 @@
 #include "graphNode.h"
 
-void GraphNode::draw(Shader &shader) {
-  if (model_ && !isInstancedRender_) {
+void GraphNode::draw(Shader &shader, bool skipThisSubtree) {
+  if (skipThisSubtree) {
+    return;
+  }
+
+  if (model_ && !skipDraw_) {
     shader.setUniform("model", globalTransform_);
     model_->draw(shader);
   }
+
   for (auto &child : children_) {
-    child->draw(shader);
+    child->draw(shader, false); // Dzieci normalnie
   }
 }
 
@@ -35,6 +40,4 @@ glm::vec3 GraphNode::getGlobalPosition() const {
   return glm::vec3(globalTransform_[3]);
 }
 
-void GraphNode::setIsInstancedRendering(bool isInstanced) {
-  isInstancedRender_ = isInstanced;
-}
+void GraphNode::setSkipDraw(bool isDraw) { skipDraw_ = isDraw; }

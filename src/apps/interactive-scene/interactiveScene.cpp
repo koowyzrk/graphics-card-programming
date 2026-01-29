@@ -16,8 +16,8 @@ void InteractiveScene::init_app() {
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
 
-  // reflectShader_ = new Shader(resourceDir + "shaders/reflect.vert",
-  //                             resourceDir + "shaders/reflect.frag");
+  reflectShader_ = new Shader(resourceDir + "shaders/reflect.vert",
+                              resourceDir + "shaders/reflect.frag");
 
   camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 100.0f, 400.0f),
                                            glm::radians(45.0f),
@@ -155,7 +155,12 @@ void InteractiveScene::render() {
 
   shader_->setUniform("isInstanced", false);
   if (rootNode_) {
-    rootNode_->draw(*shader_);
+    for (auto &child : rootNode_->getChildren()) {
+      if (child == reflectiveNode_) {
+        continue;
+      }
+      child->draw(*shader_);
+    }
   }
 
   if (!houses_.empty()) {
@@ -171,6 +176,19 @@ void InteractiveScene::render() {
     }
   }
   shader_->setUniform("isInstanced", false);
+
+  if (reflectiveNode_) {
+    reflectShader_->use();
+    reflectShader_->setUniform("view", view);
+    reflectShader_->setUniform("projection", projection);
+    reflectShader_->setUniform("cameraPos", camera_->getPosition());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_->getTextureID());
+    reflectShader_->setUniform("skybox", 0);
+
+    reflectiveNode_->draw(*reflectShader_);
+  }
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
@@ -298,18 +316,22 @@ void InteractiveScene::createScene(int houseCount) {
   rootNode_->addChild(planeNode);
 
   // interactice scene other objects
+  reflectiveNode_ = std::make_shared<GraphNode>();
+  reflectiveNode_->setSkipDraw(true);
+  rootNode_->addChild(reflectiveNode_);
+
   std::string resourceDir = "src/apps/interactive-scene/res/models";
   cube_ = std::make_unique<Model>(resourceDir + "/cube/cube.gltf");
   auto cubeNode = std::make_shared<GraphNode>(cube_.get());
   cubeNode->getTransform().setPosition(glm::vec3(-100, 100.0f, 0));
   cubeNode->getTransform().setScale(glm::vec3(25.0f, 25.0f, 25.0f));
-  rootNode_->addChild(cubeNode);
+  reflectiveNode_->addChild(cubeNode);
 
   character_ = std::make_unique<Model>(resourceDir + "/zelda/zelda.gltf");
   auto characterNode = std::make_shared<GraphNode>(character_.get());
   characterNode->getTransform().setPosition(glm::vec3(100, 100.0f, 0));
   characterNode->getTransform().setScale(glm::vec3(40.0f, 40.0f, 40.0f));
-  rootNode_->addChild(characterNode);
+  reflectiveNode_->addChild(characterNode);
   //
 
   // lights
@@ -371,12 +393,12 @@ void InteractiveScene::createScene(int houseCount) {
 
       auto walls = std::make_shared<GraphNode>(wallModel);
       // walls->setIsInstancedRendering(false);
-      walls->setIsInstancedRendering(true);
+      walls->setSkipDraw(true);
       houseRoot->addChild(walls);
 
       auto roof = std::make_shared<GraphNode>(roofModel);
       // roof->setIsInstancedRendering(false);
-      roof->setIsInstancedRendering(true);
+      roof->setSkipDraw(true);
       roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
       houseRoot->addChild(roof);
 

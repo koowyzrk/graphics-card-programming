@@ -12,7 +12,7 @@ public:
   GraphNode(Model *model = nullptr, GraphNode *parent = nullptr)
       : model_(model), parent_(parent) {}
 
-  virtual void draw(Shader &shader);
+  virtual void draw(Shader &shader, bool skipThisSubtree = false);
   void addChild(std::shared_ptr<GraphNode> child);
 
   Transform &getTransform();
@@ -25,7 +25,7 @@ public:
   glm::mat4 getGlobalTransform();
   glm::vec3 getGlobalPosition() const;
 
-  void setIsInstancedRendering(bool isInstanced);
+  void setSkipDraw(bool isDraw);
 
 private:
   GraphNode *parent_ = nullptr;
@@ -35,5 +35,5 @@ private:
   Transform transform_;
   glm::mat4 globalTransform_ = glm::mat4(1.0f);
 
-  bool isInstancedRender_ = false;
+  bool skipDraw_ = false;
 };

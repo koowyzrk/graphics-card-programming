@@ -11,6 +11,7 @@ public:
   ~SkyBox();
 
   void draw(const glm::mat4 &view, const glm::mat4 &projection);
+  unsigned int getTextureID() { return textureID_; }
 
 private:
   unsigned int vao_, vbo_;

@@ -37,7 +37,7 @@ void HousingEstate::init_app() {
   lightVisualModel = generateCubeModel(1.0f, textureDir);
   //
 
-  createScene(20);
+  createScene(200);
 
   GLFWwindow *glfwWin = window->getWindow();
   glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -350,12 +350,12 @@ void HousingEstate::createScene(int houseCount) {
 
       auto walls = std::make_shared<GraphNode>(wallModel);
       // walls->setIsInstancedRendering(false);
-      walls->setIsInstancedRendering(true);
+      walls->setSkipDraw(true);
       houseRoot->addChild(walls);
 
       auto roof = std::make_shared<GraphNode>(roofModel);
       // roof->setIsInstancedRendering(false);
-      roof->setIsInstancedRendering(true);
+      roof->setSkipDraw(true);
       roof->getTransform().setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
       houseRoot->addChild(roof);
 
