@@ -1,4 +1,5 @@
 #include "apps/housing-estate/housingEstate.h"
+#include "apps/interactive-scene/interactiveScene.h"
 #include "apps/sierpinski/sierpinski.h"
 #include "apps/solar-system/solarSystem.h"
 #include "apps/triangle/triangle.h"
@@ -15,12 +16,13 @@ int main(int, char **) {
   std::cout << "2. Sierpinski\n";
   std::cout << "3. Solar System\n";
   std::cout << "4. Housing Estate\n";
+  std::cout << "5. Housing Estate\n";
   std::cout << "-----------------------------\n";
-  std::cout << "Enter choice (1-4): ";
+  std::cout << "Enter choice (1-5): ";
   std::cin >> choice;
 
-  if (std::cin.fail() ||
-      (choice != 1 && choice != 2 && choice != 3 && choice != 4)) {
+  if (std::cin.fail() || (choice != 1 && choice != 2 && choice != 3 &&
+                          choice != 4 && choice != 5)) {
     std::cerr << "Invalid choice. Exiting.\n";
     return -1;
   }
@@ -43,6 +45,10 @@ int main(int, char **) {
   case 4:
     std::cout << "Launching Housing Estate project...\n";
     app = new HousingEstate();
+    break;
+  case 5:
+    std::cout << "Launching Housing Estate project...\n";
+    app = new InteractiveScene();
     break;
   }
 

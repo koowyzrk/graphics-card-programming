@@ -20,11 +20,17 @@ public:
   glm::mat4 getViewMatrix() const;
   glm::mat4 getProjection() const { return projection_; }
 
+  float getYaw() const { return yaw_; }
+  float getPitch() const { return pitch_; }
+
   // perspective projection
   void setProjection(float fov, float aspect, float zNear, float zFar);
   // ortographic projection
   void setProjection(float left, float right, float bottom, float top,
                      float zNear, float zFar);
+
+  void setYaw(const float yaw) { yaw_ = yaw; }
+  void setPitch(const float pitch) { pitch_ = pitch; }
 
   float cameraSpeed = 2.5f;
   float mouseSensitivity = 0.1f;

@@ -1,4 +1,4 @@
-#include "housingEstate.h"
+#include "interactiveScene.h"
 #include "GLFW/glfw3.h"
 #include "core/light.h"
 #include "core/mesh.h"
@@ -8,23 +8,29 @@
 #include "imgui.h"
 #include <memory>
 
-HousingEstate::HousingEstate() {}
-HousingEstate::~HousingEstate() {}
+InteractiveScene::InteractiveScene() {}
+InteractiveScene::~InteractiveScene() {}
 
-void HousingEstate::init_app() {
-  std::string resourceDir = "src/apps/housing-estate/res/";
+void InteractiveScene::init_app() {
+  std::string resourceDir = "src/apps/interactive-scene/res/";
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
-  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 70.0f, 0.0f),
+
+  // reflectShader_ = new Shader(resourceDir + "shaders/reflect.vert",
+  //                             resourceDir + "shaders/reflect.frag");
+
+  camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 100.0f, 400.0f),
                                            glm::radians(45.0f),
                                            1920.0f / 1080.0f, 0.1f, 10000.0f));
+  camera_->setYaw(10.0f);
+  camera_->setPitch(-60.0f);
 
   // skybox
   std::vector<std::string> faces = {"right.jpg",  "left.jpg",  "top.jpg",
                                     "bottom.jpg", "front.jpg", "back.jpg"};
-  skybox_ = new SkyBox("src/apps/housing-estate/res/textures/skybox", faces,
-                       "src/apps/housing-estate/res/shaders/skybox.vert",
-                       "src/apps/housing-estate/res/shaders/skybox.frag");
+  skybox_ = new SkyBox("src/apps/interactive-scene/res/textures/skybox", faces,
+                       "src/apps/interactive-scene/res/shaders/skybox.vert",
+                       "src/apps/interactive-scene/res/shaders/skybox.frag");
   //
 
   // lights
@@ -33,7 +39,7 @@ void HousingEstate::init_app() {
   spotlight2_ = new Light("spotlight_2", LightType::SPOT);
   point_ = new Light("point", LightType::POINT);
 
-  std::string textureDir = "src/apps/housing-estate/res/textures";
+  std::string textureDir = "src/apps/interactive-scene/res/textures";
   lightVisualModel = generateCubeModel(1.0f, textureDir);
   //
 
@@ -44,7 +50,7 @@ void HousingEstate::init_app() {
   glEnable(GL_DEPTH_TEST);
 }
 
-void HousingEstate::input() {
+void InteractiveScene::input() {
   GLFWwindow *glfwWin = window->getWindow();
   bool spaceCurrentlyPressed =
       (glfwGetKey(glfwWin, GLFW_KEY_SPACE) == GLFW_PRESS);
@@ -85,7 +91,7 @@ void HousingEstate::input() {
   }
 }
 
-void HousingEstate::update() {
+void InteractiveScene::update() {
   // lights
   float time = (float)glfwGetTime();
   for (auto &l : lights) {
@@ -126,7 +132,7 @@ void HousingEstate::update() {
   }
 }
 
-void HousingEstate::render() {
+void InteractiveScene::render() {
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -169,7 +175,7 @@ void HousingEstate::render() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void HousingEstate::render_gui() {
+void InteractiveScene::render_gui() {
   ImGui::Begin("Housing Estate");
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -280,16 +286,31 @@ void HousingEstate::render_gui() {
   ImGui::End();
 }
 
-void HousingEstate::createScene(int houseCount) {
+void InteractiveScene::createScene(int houseCount) {
   rootNode_ = std::make_shared<GraphNode>();
 
-  std::string textureDir = "src/apps/housing-estate/res/textures";
+  std::string textureDir = "src/apps/interactive-scene/res/textures";
   Model *planeModel = generatePlaneModel(1000.0f, textureDir, "grass.jpg");
   Model *wallModel = generateCubeModel(5.0f, textureDir);
   Model *roofModel = generatePyramidModel(6.0f, textureDir, "roof.jpg");
 
   auto planeNode = std::make_shared<GraphNode>(planeModel);
   rootNode_->addChild(planeNode);
+
+  // interactice scene other objects
+  std::string resourceDir = "src/apps/interactive-scene/res/models";
+  cube_ = std::make_unique<Model>(resourceDir + "/cube/cube.gltf");
+  auto cubeNode = std::make_shared<GraphNode>(cube_.get());
+  cubeNode->getTransform().setPosition(glm::vec3(-100, 100.0f, 0));
+  cubeNode->getTransform().setScale(glm::vec3(25.0f, 25.0f, 25.0f));
+  rootNode_->addChild(cubeNode);
+
+  character_ = std::make_unique<Model>(resourceDir + "/zelda/zelda.gltf");
+  auto characterNode = std::make_shared<GraphNode>(character_.get());
+  characterNode->getTransform().setPosition(glm::vec3(100, 100.0f, 0));
+  characterNode->getTransform().setScale(glm::vec3(40.0f, 40.0f, 40.0f));
+  rootNode_->addChild(characterNode);
+  //
 
   // lights
   lightsRoot = std::make_shared<GraphNode>();
@@ -365,8 +386,8 @@ void HousingEstate::createScene(int houseCount) {
   }
 }
 
-Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
-                                         std::string textureFile) {
+Model *InteractiveScene::generatePlaneModel(float size, std::string textureDir,
+                                            std::string textureFile) {
   Model *model = new Model();
 
   float uvScale = 100.0f;
@@ -399,7 +420,7 @@ Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
   return model;
 }
 
-Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
+Model *InteractiveScene::generateCubeModel(float size, std::string textureDir) {
   Model *model = new Model();
   float s = size / 2.0f;
 
@@ -428,13 +449,14 @@ Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
   addFace({{-s, -s, -s}, {-s, -s, s}, {-s, s, s}, {-s, s, -s}}, {-1, 0, 0},
           "red_brick_window.jpg");
   addFace({{s, -s, -s}, {s, s, -s}, {s, s, s}, {s, -s, s}}, {1, 0, 0},
-          "red_brick_window.jpg");
+          "#include <iostream>red_brick_window.jpg");
 
   return model;
 }
 
-Model *HousingEstate::generatePyramidModel(float size, std::string textureDir,
-                                           std::string textureFile) {
+Model *InteractiveScene::generatePyramidModel(float size,
+                                              std::string textureDir,
+                                              std::string textureFile) {
   Model *model = new Model();
   std::vector<Vertex> vertices;
   float h = size * 0.8f;
