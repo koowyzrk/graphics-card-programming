@@ -394,7 +394,8 @@ Model *HousingEstate::generatePlaneModel(float size, std::string textureDir,
   groundTex.path = textureFile.c_str();
   textures.push_back(groundTex);
 
-  Mesh mesh(vertices, indices, textures);
+  glm::vec4 baseColor(1.0f);
+  Mesh mesh(vertices, indices, textures, baseColor);
   model->addMesh(mesh);
   return model;
 }
@@ -403,6 +404,7 @@ Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
   Model *model = new Model();
   float s = size / 2.0f;
 
+  glm::vec4 baseColor(1.0f);
   auto addFace = [&](std::vector<glm::vec3> pos, glm::vec3 norm,
                      std::string texFile) {
     std::vector<Vertex> v;
@@ -418,7 +420,7 @@ Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
     t.type = "texture_diffuse";
     textures.push_back(t);
 
-    model->addMesh(Mesh(v, ind, textures));
+    model->addMesh(Mesh(v, ind, textures, baseColor));
   };
 
   addFace({{-s, -s, s}, {s, -s, s}, {s, s, s}, {-s, s, s}}, {0, 0, 1},
@@ -436,6 +438,7 @@ Model *HousingEstate::generateCubeModel(float size, std::string textureDir) {
 Model *HousingEstate::generatePyramidModel(float size, std::string textureDir,
                                            std::string textureFile) {
   Model *model = new Model();
+  glm::vec4 baseColor(1.0f);
   std::vector<Vertex> vertices;
   float h = size * 0.8f;
   float s = size / 2.0f;
@@ -464,6 +467,6 @@ Model *HousingEstate::generatePyramidModel(float size, std::string textureDir,
   tex.path = textureFile;
   textures.push_back(tex);
 
-  model->addMesh(Mesh(vertices, indices, textures));
+  model->addMesh(Mesh(vertices, indices, textures, baseColor));
   return model;
 }

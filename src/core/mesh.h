@@ -22,7 +22,7 @@ struct Texture {
 class Mesh {
 public:
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
-       std::vector<Texture> textures);
+       std::vector<Texture> textures, glm::vec4 base_color);
   void draw(Shader &shader) const;
 
   // instanced
@@ -38,6 +38,7 @@ private:
   std::vector<Vertex> vertices_;
   std::vector<unsigned int> indices_;
   std::vector<Texture> textures_;
+  glm::vec4 baseColor_;
   GLenum drawMode_ = GL_TRIANGLES;
 
   void setupMesh();

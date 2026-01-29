@@ -15,18 +15,24 @@ struct Car {
   std::shared_ptr<GraphNode> glass;
   std::shared_ptr<GraphNode> left_doors;
   std::shared_ptr<GraphNode> right_doors;
+
+  std::shared_ptr<GraphNode> left_wheel_pivot;
   std::shared_ptr<GraphNode> left_wheel;
+  std::shared_ptr<GraphNode> right_wheel_pivot;
   std::shared_ptr<GraphNode> right_wheel;
+
   std::shared_ptr<GraphNode> left_back_wheel;
   std::shared_ptr<GraphNode> right_back_wheel;
   std::shared_ptr<GraphNode> spoiler;
 
-  float speed = 0.0f;
-  float wheelAngle = 0.0f;
   float yaw = 0.0f;
-  float steeringAngle = 0.0f;
+  float accelerationInput = 0.0f;
+  float steeringInput = 0.0f;
+  float wheelRotation = 0.0f;
+  float wheelSteer = 0.0f;
   bool doorOpen = false;
   float doorOpenAngle = 0.0f;
+  float doorSpeed = 90.0f;
 };
 
 struct HouseScene {

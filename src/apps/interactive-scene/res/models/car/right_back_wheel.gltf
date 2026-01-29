@@ -17,20 +17,15 @@
 			"mesh":0,
 			"name":"right_wheel_back",
 			"rotation":[
-				-0.002867409959435463,
-				-0.7071008086204529,
-				0.7071011066436768,
-				0.002868192968890071
+				0.4979684054851532,
+				-0.4979676306247711,
+				0.5020235776901245,
+				0.5020239353179932
 			],
 			"scale":[
 				0.009999999776482582,
 				0.009999999776482582,
 				0.009999999776482582
-			],
-			"translation":[
-				0,
-				1,
-				0
 			]
 		}
 	],
@@ -70,29 +65,29 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":781,
+			"count":779,
 			"max":[
-				-107.35292053222656,
-				121.16118621826172,
-				93.94607543945312
+				45.14878845214844,
+				20.747329711914062,
+				44.7819709777832
 			],
 			"min":[
-				-197.3500213623047,
-				74.65354919433594,
-				3.9490203857421875
+				-44.84831237792969,
+				-25.76030731201172,
+				-45.215084075927734
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":781,
+			"count":779,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":781,
+			"count":779,
 			"type":"VEC2"
 		},
 		{
@@ -105,32 +100,32 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":9372,
+			"byteLength":9348,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":9372,
-			"byteOffset":9372,
+			"byteLength":9348,
+			"byteOffset":9348,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":6248,
-			"byteOffset":18744,
+			"byteLength":6232,
+			"byteOffset":18696,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":3708,
-			"byteOffset":24992,
+			"byteOffset":24928,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":28700,
+			"byteLength":28636,
 			"uri":"right_back_wheel.bin"
 		}
 	]

@@ -5,6 +5,7 @@
 #include "core/transform.h"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "imgui.h"
 #include <memory>
 
@@ -77,27 +78,27 @@ void InteractiveScene::input() {
   }
   spacePressedLastFrame = spacePressed;
 
+  static bool ePressedLastFrame = false;
+  bool ePressed = (glfwGetKey(glfwWin, GLFW_KEY_E) == GLFW_PRESS);
+  if (ePressed && !ePressedLastFrame) {
+    car.doorOpen = !car.doorOpen;
+  }
+  ePressedLastFrame = ePressed;
+
   if (isDriving) {
-    float acceleration = 0.0f;
     if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
-      acceleration = 1.0f;
-    if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
-      acceleration = -1.0f;
-
-    const float accelPower = 600.0f;
-    const float steeringSpeed = 3.5f;
-    const float drag = 0.985f;
-
-    car.speed += acceleration * accelPower * deltaTime;
-    car.speed *= drag;
+      car.accelerationInput = 1.0f;
+    else if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
+      car.accelerationInput = -0.5f; // Hamowanie słabsze niż przyspieszanie
+    else
+      car.accelerationInput = 0.0f;
 
     if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
-      car.steeringAngle += steeringSpeed * deltaTime;
-    if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
-      car.steeringAngle -= steeringSpeed * deltaTime;
-
-    car.steeringAngle = glm::clamp(car.steeringAngle, glm::radians(-30.0f),
-                                   glm::radians(30.0f));
+      car.steeringInput = 1.0f;
+    else if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+      car.steeringInput = -1.0f;
+    else
+      car.steeringInput = 0.0f;
   } else {
     if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
       camera_->processKeyboard(CameraMovement::FORWARD,
@@ -147,41 +148,57 @@ void InteractiveScene::update() {
   if (car.root) {
     Transform &trans = car.root->getTransform();
 
-    car.yaw += (car.steeringAngle * car.speed / 100.0f) * deltaTime;
-    trans.setRotation(glm::vec3(0.0f, car.yaw, 0.0f));
+    if (fabs(car.accelerationInput) > 0.01f) {
+      glm::vec3 forward = trans.getForward();
+      forward.y = 0.0f;
+      forward = glm::normalize(-forward);
 
-    glm::vec3 forwardDir = glm::vec3(sin(car.yaw), 0.0f, cos(car.yaw));
-    glm::vec3 pos = trans.getPosition();
-    pos += forwardDir * car.speed * deltaTime;
-    trans.setPosition(pos);
+      float speed = car.accelerationInput * 400.0f * deltaTime;
+      glm::vec3 pos = trans.getPosition();
+      pos += forward * speed;
+      trans.setPosition(pos);
 
-    // toczenie kół
-    car.wheelAngle += car.speed * deltaTime * 0.1f;
+      float turnSpeed = car.steeringInput * 65.0f * deltaTime;
+      car.yaw += turnSpeed;
+      trans.setRotation(glm::vec3(0.0f, car.yaw, 0.0f));
 
-    GLFWwindow *glfwWin = window->getWindow();
-    float steerAmount = 0.0f;
-    if (isDriving) {
-      if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
-        steerAmount = glm::radians(30.0f);
-      if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
-        steerAmount = glm::radians(-30.0f);
+      car.wheelRotation += car.accelerationInput * 160.0f * deltaTime;
     }
 
+    car.wheelSteer = car.steeringInput * glm::radians(800.0f);
+
+    car.left_wheel_pivot->getTransform().setRotation(
+        glm::vec3(0, car.wheelSteer, 0));
+    car.right_wheel_pivot->getTransform().setRotation(
+        glm::vec3(0, car.wheelSteer, 0));
+
     car.left_wheel->getTransform().setRotation(
-        glm::vec3(car.wheelAngle, car.steeringAngle, 0.0f));
+        glm::vec3(car.wheelRotation, 0, 0));
     car.right_wheel->getTransform().setRotation(
-        glm::vec3(car.wheelAngle, car.steeringAngle, 0.0f));
+        glm::vec3(car.wheelRotation, 0, 0));
 
     car.left_back_wheel->getTransform().setRotation(
-        glm::vec3(car.wheelAngle, 0.0f, 0.0f));
+        glm::vec3(car.wheelRotation, 0, 0));
     car.right_back_wheel->getTransform().setRotation(
-        glm::vec3(car.wheelAngle, 0.0f, 0.0f));
+        glm::vec3(car.wheelRotation, 0, 0));
+  }
 
-    float targetAngle = car.doorOpen ? glm::radians(45.0f) : 0.0f;
-    car.doorOpenAngle += (targetAngle - car.doorOpenAngle) * deltaTime * 5.0f;
-    if (car.left_doors)
+  if (car.left_doors && car.right_doors) {
+    float targetAngle = car.doorOpen ? 70.0f : 0.0f;
+    float angleDiff = targetAngle - car.doorOpenAngle;
+
+    if (fabs(angleDiff) > 0.1f) {
+      float deltaAngle = car.doorSpeed * deltaTime;
+      if (fabs(deltaAngle) > fabs(angleDiff))
+        deltaAngle = fabs(angleDiff);
+
+      car.doorOpenAngle += (angleDiff > 0 ? 1.0f : -1.0f) * deltaAngle;
+
       car.left_doors->getTransform().setRotation(
-          glm::vec3(0, 0, car.doorOpenAngle));
+          glm::vec3(0.0f, car.doorOpenAngle, 0.0f));
+      car.right_doors->getTransform().setRotation(
+          glm::vec3(0.0f, -car.doorOpenAngle, 0.0f));
+    }
   }
 
   if (isDriving) {
@@ -478,22 +495,33 @@ void InteractiveScene::createScene(int houseCount) {
   car.root->addChild(car.glass);
 
   leftWheel_ = std::make_unique<Model>(resourceDir + "/car/left_wheel.gltf");
+  car.left_wheel_pivot = std::make_shared<GraphNode>();
+  car.left_wheel_pivot->getTransform().setPosition(glm::vec3(1.0f, 0.5f, 1.6f));
+  car.root->addChild(car.left_wheel_pivot);
+
   car.left_wheel = std::make_shared<GraphNode>(leftWheel_.get());
-  car.left_wheel->getTransform().setPosition(glm::vec3(-1.7f, -0.5f, 1.0f));
-  car.root->addChild(car.left_wheel);
+  car.left_wheel_pivot->addChild(car.left_wheel);
 
   rightWheel_ = std::make_unique<Model>(resourceDir + "/car/right_wheel.gltf");
+  car.right_wheel_pivot = std::make_shared<GraphNode>();
+  car.right_wheel_pivot->getTransform().setPosition(
+      glm::vec3(-1.2f, 0.5f, 1.6f));
+  car.root->addChild(car.right_wheel_pivot);
+
   car.right_wheel = std::make_shared<GraphNode>(rightWheel_.get());
-  car.root->addChild(car.right_wheel);
+  car.right_wheel_pivot->addChild(car.right_wheel);
 
   leftBackWheel_ =
       std::make_unique<Model>(resourceDir + "/car/left_back_wheel.gltf");
   car.left_back_wheel = std::make_shared<GraphNode>(leftBackWheel_.get());
+  car.left_back_wheel->getTransform().setPosition(glm::vec3(1.0f, 0.5f, -1.6f));
   car.root->addChild(car.left_back_wheel);
 
   rightBackWheel_ =
       std::make_unique<Model>(resourceDir + "/car/right_back_wheel.gltf");
   car.right_back_wheel = std::make_shared<GraphNode>(rightBackWheel_.get());
+  car.right_back_wheel->getTransform().setPosition(
+      glm::vec3(-1.2f, 0.5f, -1.6f));
   car.root->addChild(car.right_back_wheel);
 
   leftDoors_ = std::make_unique<Model>(resourceDir + "/car/left_door.gltf");
@@ -588,7 +616,7 @@ void InteractiveScene::updateCameraFollow() {
   Transform &carTrans = car.root->getTransform();
   glm::vec3 carPos = carTrans.getPosition();
 
-  float distance = 150.0f;
+  float distance = 110.0f;
 
   float yaw = camera_->getYaw();
   float pitch = camera_->getPitch();
@@ -604,6 +632,7 @@ void InteractiveScene::updateCameraFollow() {
 Model *InteractiveScene::generatePlaneModel(float size, std::string textureDir,
                                             std::string textureFile) {
   Model *model = new Model();
+  glm::vec4 baseColor(1.0f);
 
   float uvScale = 100.0f;
 
@@ -630,7 +659,7 @@ Model *InteractiveScene::generatePlaneModel(float size, std::string textureDir,
   groundTex.path = textureFile.c_str();
   textures.push_back(groundTex);
 
-  Mesh mesh(vertices, indices, textures);
+  Mesh mesh(vertices, indices, textures, baseColor);
   model->addMesh(mesh);
   return model;
 }
@@ -639,6 +668,7 @@ Model *InteractiveScene::generateCubeModel(float size, std::string textureDir) {
   Model *model = new Model();
   float s = size / 2.0f;
 
+  glm::vec4 baseColor(1.0f);
   auto addFace = [&](std::vector<glm::vec3> pos, glm::vec3 norm,
                      std::string texFile) {
     std::vector<Vertex> v;
@@ -654,7 +684,7 @@ Model *InteractiveScene::generateCubeModel(float size, std::string textureDir) {
     t.type = "texture_diffuse";
     textures.push_back(t);
 
-    model->addMesh(Mesh(v, ind, textures));
+    model->addMesh(Mesh(v, ind, textures, baseColor));
   };
 
   addFace({{-s, -s, s}, {s, -s, s}, {s, s, s}, {-s, s, s}}, {0, 0, 1},
@@ -674,6 +704,7 @@ Model *InteractiveScene::generatePyramidModel(float size,
                                               std::string textureFile) {
   Model *model = new Model();
   std::vector<Vertex> vertices;
+  glm::vec4 baseColor(1.0f);
   float h = size * 0.8f;
   float s = size / 2.0f;
   glm::vec3 peak(0.0f, h, 0.0f);
@@ -701,6 +732,6 @@ Model *InteractiveScene::generatePyramidModel(float size,
   tex.path = textureFile;
   textures.push_back(tex);
 
-  model->addMesh(Mesh(vertices, indices, textures));
+  model->addMesh(Mesh(vertices, indices, textures, baseColor));
   return model;
 }

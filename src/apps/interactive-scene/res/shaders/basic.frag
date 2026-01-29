@@ -21,6 +21,9 @@ uniform sampler2D texture_diffuse1;
 uniform bool isLightSource;
 uniform vec3 lightVisualColor;
 
+uniform bool hasTexture;
+uniform vec4 materialColor;
+
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
@@ -76,7 +79,12 @@ void main() {
 
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 texColor = texture(texture_diffuse1, TexCoords).rgb;
+    vec3 texColor;
+    if (hasTexture) {
+        texColor = texture(texture_diffuse1, TexCoords).rgb;
+    } else {
+        texColor = materialColor.rgb;
+}
     
     // ambient
     vec3 result = vec3(0.1) * texColor; 

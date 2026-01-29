@@ -16,7 +16,7 @@ int main(int, char **) {
   std::cout << "2. Sierpinski\n";
   std::cout << "3. Solar System\n";
   std::cout << "4. Housing Estate\n";
-  std::cout << "5. Housing Estate\n";
+  std::cout << "5. Interactive Scene\n";
   std::cout << "-----------------------------\n";
   std::cout << "Enter choice (1-5): ";
   std::cin >> choice;

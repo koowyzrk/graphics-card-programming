@@ -1,10 +1,12 @@
 #include "mesh.h"
 #include "core/shader.h"
+#include "glm/ext/vector_float4.hpp"
 #include <cstddef>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
-           std::vector<Texture> textures)
-    : vertices_(vertices), indices_(indices), textures_(textures) {
+           std::vector<Texture> textures, glm::vec4 base_color)
+    : vertices_(vertices), indices_(indices), textures_(textures),
+      baseColor_(base_color) {
   setupMesh();
 }
 
@@ -72,6 +74,8 @@ void Mesh::draw(Shader &shader) const {
   unsigned int normal = 1;
   unsigned int height = 1;
 
+  bool hasTexture = !textures_.empty();
+
   // GL_INVALID_OPERATION error generated. <apiElementType> value is invalid;
   // expected GL_INT or GL_UNSIGNED_INT64_NV
   for (int i = 0; i < textures_.size(); i++) {
@@ -90,6 +94,10 @@ void Mesh::draw(Shader &shader) const {
     shader.setUniform((type + number).c_str(), i);
     glBindTexture(GL_TEXTURE_2D, textures_[i].id);
   }
+
+  shader.setUniform("hasTexture", hasTexture);
+  shader.setUniform("materialColor", baseColor_);
+
   // draw mesh
   glBindVertexArray(VAO);
   glDrawElements(drawMode_, static_cast<unsigned int>(indices_.size()),
@@ -103,6 +111,8 @@ void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
   unsigned int specular = 1;
   unsigned int normal = 1;
   unsigned int height = 1;
+
+  bool hasTexture = !textures_.empty();
 
   for (int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);
@@ -120,6 +130,10 @@ void Mesh::drawInstanced(Shader &shader, unsigned int instanceCount) const {
     shader.setUniform((type + number).c_str(), i);
     glBindTexture(GL_TEXTURE_2D, textures_[i].id);
   }
+
+  shader.setUniform("hasTexture", hasTexture);
+  shader.setUniform("materialColor", baseColor_);
+
   glBindVertexArray(VAO);
   // wysylamy sygnal do GPU zeby narysowal obiekty wyslane do instancjonowania
   // konkretna ilosc razy

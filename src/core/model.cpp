@@ -82,6 +82,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene,
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   std::vector<Texture> textures;
+  glm::vec4 baseColor(1.0f);
 
   // uzywana do transformacji wektorow normalnych
   glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform)));
@@ -132,6 +133,13 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene,
   // Process materials (textures)
   aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
+  aiColor4D diffuseColor;
+  if (AI_SUCCESS ==
+      aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor)) {
+    baseColor = glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b,
+                          diffuseColor.a);
+  }
+
   std::vector<Texture> diffuseMaps =
       loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
   textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -148,7 +156,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene,
       loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_height");
   textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-  return Mesh(vertices, indices, textures);
+  return Mesh(vertices, indices, textures, baseColor);
 }
 
 // ladowanie tekstur z materialu

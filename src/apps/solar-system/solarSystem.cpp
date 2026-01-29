@@ -539,6 +539,7 @@ Model *SolarSystem::generateSphereModel(GLuint sectorCount, GLuint stackCount) {
   // ustalenie promienia sfery
   const float radius = 1.0f;
 
+  glm::vec4 baseColor(1.0f);
   std::vector<Vertex> vertices;
   float x, y, z, xy;
   // wektor normalny, odwrotnosc promienia
@@ -623,7 +624,7 @@ Model *SolarSystem::generateSphereModel(GLuint sectorCount, GLuint stackCount) {
   }
 
   std::vector<Texture> textures;
-  Mesh mesh(vertices, indices, textures);
+  Mesh mesh(vertices, indices, textures, baseColor);
 
   Model *model = new Model();
   model->addMesh(mesh);
@@ -633,6 +634,7 @@ Model *SolarSystem::generateSphereModel(GLuint sectorCount, GLuint stackCount) {
 Model *SolarSystem::generateOrbitModel(int segments) {
   std::vector<Vertex> orbitVertices;
   std::vector<unsigned int> indices;
+  glm::vec4 baseColor(1.0f);
   const float radius = 1.0f;
   const float step = 2 * M_PI / segments;
 
@@ -657,7 +659,7 @@ Model *SolarSystem::generateOrbitModel(int segments) {
   }
 
   std::vector<Texture> textures;
-  Mesh mesh(orbitVertices, indices, textures);
+  Mesh mesh(orbitVertices, indices, textures, baseColor);
   mesh.setDrawMode(GL_LINES);
 
   Model *model = new Model();
