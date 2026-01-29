@@ -16,8 +16,11 @@ void InteractiveScene::init_app() {
   shader_ = new Shader(resourceDir + "shaders/basic.vert",
                        resourceDir + "shaders/basic.frag");
 
-  reflectShader_ = new Shader(resourceDir + "shaders/reflect.vert",
+  reflectShader_ = new Shader(resourceDir + "shaders/ref.vert",
                               resourceDir + "shaders/reflect.frag");
+
+  refractionShader_ = new Shader(resourceDir + "shaders/ref.vert",
+                                 resourceDir + "shaders/refract.frag");
 
   camera_ = new Camera(Camera::Perspective(glm::vec3(0.0f, 100.0f, 400.0f),
                                            glm::radians(45.0f),
@@ -52,27 +55,61 @@ void InteractiveScene::init_app() {
 
 void InteractiveScene::input() {
   GLFWwindow *glfwWin = window->getWindow();
-  bool spaceCurrentlyPressed =
-      (glfwGetKey(glfwWin, GLFW_KEY_SPACE) == GLFW_PRESS);
-  if (spaceCurrentlyPressed && !tabPressedLastFrame_) {
-    mouseControlEnabled_ = !mouseControlEnabled_;
-    if (mouseControlEnabled_) {
-      glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      firstMouse = true;
-    } else {
-      glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-  }
-  tabPressedLastFrame_ = spaceCurrentlyPressed;
 
-  if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement::FORWARD, deltaTime * cameraSpeed);
-  if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement::BACKWARD, deltaTime * cameraSpeed);
-  if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement::RIGHT, deltaTime * cameraSpeed);
-  if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
-    camera_->processKeyboard(CameraMovement::LEFT, deltaTime * cameraSpeed);
+  static bool gPressedLastFrame = false;
+  bool gPressed = (glfwGetKey(glfwWin, GLFW_KEY_G) == GLFW_PRESS);
+  if (gPressed && !gPressedLastFrame) {
+    isDriving = !isDriving;
+    firstMouse = true;
+    mouseControlEnabled_ = true;
+    glfwSetInputMode(glfwWin, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  }
+  gPressedLastFrame = gPressed;
+
+  static bool spacePressedLastFrame = false;
+  bool spacePressed = (glfwGetKey(glfwWin, GLFW_KEY_SPACE) == GLFW_PRESS);
+  if (spacePressed && !spacePressedLastFrame) {
+    mouseControlEnabled_ = !mouseControlEnabled_;
+    glfwSetInputMode(glfwWin, GLFW_CURSOR,
+                     mouseControlEnabled_ ? GLFW_CURSOR_DISABLED
+                                          : GLFW_CURSOR_NORMAL);
+    firstMouse = true;
+  }
+  spacePressedLastFrame = spacePressed;
+
+  if (isDriving) {
+    float acceleration = 0.0f;
+    if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
+      acceleration = 1.0f;
+    if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
+      acceleration = -1.0f;
+
+    const float accelPower = 600.0f;
+    const float steeringSpeed = 3.5f;
+    const float drag = 0.985f;
+
+    car.speed += acceleration * accelPower * deltaTime;
+    car.speed *= drag;
+
+    if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
+      car.steeringAngle += steeringSpeed * deltaTime;
+    if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+      car.steeringAngle -= steeringSpeed * deltaTime;
+
+    car.steeringAngle = glm::clamp(car.steeringAngle, glm::radians(-30.0f),
+                                   glm::radians(30.0f));
+  } else {
+    if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
+      camera_->processKeyboard(CameraMovement::FORWARD,
+                               deltaTime * cameraSpeed);
+    if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
+      camera_->processKeyboard(CameraMovement::BACKWARD,
+                               deltaTime * cameraSpeed);
+    if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+      camera_->processKeyboard(CameraMovement::RIGHT, deltaTime * cameraSpeed);
+    if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
+      camera_->processKeyboard(CameraMovement::LEFT, deltaTime * cameraSpeed);
+  }
 
   if (mouseControlEnabled_) {
     double mouseX, mouseY;
@@ -83,10 +120,12 @@ void InteractiveScene::input() {
       lastY = mouseY;
       firstMouse = false;
     }
+
     float xOffset = mouseX - lastX;
     float yOffset = lastY - mouseY;
     lastX = mouseX;
     lastY = mouseY;
+
     camera_->processMouseMovement(xOffset, yOffset);
   }
 }
@@ -105,7 +144,51 @@ void InteractiveScene::update() {
   }
   //
 
-  if (bufferUpdate && rootNode_) {
+  if (car.root) {
+    Transform &trans = car.root->getTransform();
+
+    car.yaw += (car.steeringAngle * car.speed / 100.0f) * deltaTime;
+    trans.setRotation(glm::vec3(0.0f, car.yaw, 0.0f));
+
+    glm::vec3 forwardDir = glm::vec3(sin(car.yaw), 0.0f, cos(car.yaw));
+    glm::vec3 pos = trans.getPosition();
+    pos += forwardDir * car.speed * deltaTime;
+    trans.setPosition(pos);
+
+    // toczenie kół
+    car.wheelAngle += car.speed * deltaTime * 0.1f;
+
+    GLFWwindow *glfwWin = window->getWindow();
+    float steerAmount = 0.0f;
+    if (isDriving) {
+      if (glfwGetKey(glfwWin, GLFW_KEY_A) == GLFW_PRESS)
+        steerAmount = glm::radians(30.0f);
+      if (glfwGetKey(glfwWin, GLFW_KEY_D) == GLFW_PRESS)
+        steerAmount = glm::radians(-30.0f);
+    }
+
+    car.left_wheel->getTransform().setRotation(
+        glm::vec3(car.wheelAngle, car.steeringAngle, 0.0f));
+    car.right_wheel->getTransform().setRotation(
+        glm::vec3(car.wheelAngle, car.steeringAngle, 0.0f));
+
+    car.left_back_wheel->getTransform().setRotation(
+        glm::vec3(car.wheelAngle, 0.0f, 0.0f));
+    car.right_back_wheel->getTransform().setRotation(
+        glm::vec3(car.wheelAngle, 0.0f, 0.0f));
+
+    float targetAngle = car.doorOpen ? glm::radians(45.0f) : 0.0f;
+    car.doorOpenAngle += (targetAngle - car.doorOpenAngle) * deltaTime * 5.0f;
+    if (car.left_doors)
+      car.left_doors->getTransform().setRotation(
+          glm::vec3(0, 0, car.doorOpenAngle));
+  }
+
+  if (isDriving) {
+    updateCameraFollow();
+  }
+
+  if (rootNode_) {
     rootNode_->updateTransform(glm::mat4(1.0f));
   }
 
@@ -156,7 +239,7 @@ void InteractiveScene::render() {
   shader_->setUniform("isInstanced", false);
   if (rootNode_) {
     for (auto &child : rootNode_->getChildren()) {
-      if (child == reflectiveNode_) {
+      if (child == reflectiveNode_ || child == refractionNode_) {
         continue;
       }
       child->draw(*shader_);
@@ -177,6 +260,34 @@ void InteractiveScene::render() {
   }
   shader_->setUniform("isInstanced", false);
 
+  if (car.glass) {
+    reflectShader_->use();
+    reflectShader_->setUniform("view", view);
+    reflectShader_->setUniform("projection", projection);
+    reflectShader_->setUniform("cameraPos", camera_->getPosition());
+    reflectShader_->setUniform("model", car.glass->getGlobalTransform());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_->getTextureID());
+    reflectShader_->setUniform("skybox", 0);
+
+    car.glass->getModel()->draw(*reflectShader_);
+  }
+
+  if (car.spoiler) {
+    refractionShader_->use();
+    refractionShader_->setUniform("view", view);
+    refractionShader_->setUniform("projection", projection);
+    refractionShader_->setUniform("cameraPos", camera_->getPosition());
+    refractionShader_->setUniform("model", car.spoiler->getGlobalTransform());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_->getTextureID());
+    refractionShader_->setUniform("skybox", 0);
+
+    car.spoiler->getModel()->draw(*refractionShader_);
+  }
+
   if (reflectiveNode_) {
     reflectShader_->use();
     reflectShader_->setUniform("view", view);
@@ -188,6 +299,19 @@ void InteractiveScene::render() {
     reflectShader_->setUniform("skybox", 0);
 
     reflectiveNode_->draw(*reflectShader_);
+  }
+
+  if (refractionNode_) {
+    refractionShader_->use();
+    refractionShader_->setUniform("view", view);
+    refractionShader_->setUniform("projection", projection);
+    refractionShader_->setUniform("cameraPos", camera_->getPosition());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_->getTextureID());
+    refractionShader_->setUniform("skybox", 0);
+
+    refractionNode_->draw(*refractionShader_);
   }
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -315,12 +439,16 @@ void InteractiveScene::createScene(int houseCount) {
   auto planeNode = std::make_shared<GraphNode>(planeModel);
   rootNode_->addChild(planeNode);
 
+  std::string resourceDir = "src/apps/interactive-scene/res/models";
   // interactice scene other objects
   reflectiveNode_ = std::make_shared<GraphNode>();
   reflectiveNode_->setSkipDraw(true);
   rootNode_->addChild(reflectiveNode_);
 
-  std::string resourceDir = "src/apps/interactive-scene/res/models";
+  refractionNode_ = std::make_shared<GraphNode>();
+  refractionNode_->setSkipDraw(true);
+  rootNode_->addChild(refractionNode_);
+
   cube_ = std::make_unique<Model>(resourceDir + "/cube/cube.gltf");
   auto cubeNode = std::make_shared<GraphNode>(cube_.get());
   cubeNode->getTransform().setPosition(glm::vec3(-100, 100.0f, 0));
@@ -331,7 +459,55 @@ void InteractiveScene::createScene(int houseCount) {
   auto characterNode = std::make_shared<GraphNode>(character_.get());
   characterNode->getTransform().setPosition(glm::vec3(100, 100.0f, 0));
   characterNode->getTransform().setScale(glm::vec3(40.0f, 40.0f, 40.0f));
-  reflectiveNode_->addChild(characterNode);
+  refractionNode_->addChild(characterNode);
+  //
+
+  // car
+  car.root = std::make_shared<GraphNode>();
+  car.root->getTransform().setPosition(glm::vec3(0, 0.0f, 200));
+  car.root->getTransform().setScale(glm::vec3(10.0f));
+  rootNode_->addChild(car.root);
+
+  carBody_ = std::make_unique<Model>(resourceDir + "/car/car_body.gltf");
+  car.body = std::make_shared<GraphNode>(carBody_.get());
+  car.root->addChild(car.body);
+
+  carGlass_ = std::make_unique<Model>(resourceDir + "/car/car_glass.gltf");
+  car.glass = std::make_shared<GraphNode>(carGlass_.get());
+  car.glass->setSkipDraw(true);
+  car.root->addChild(car.glass);
+
+  leftWheel_ = std::make_unique<Model>(resourceDir + "/car/left_wheel.gltf");
+  car.left_wheel = std::make_shared<GraphNode>(leftWheel_.get());
+  car.left_wheel->getTransform().setPosition(glm::vec3(-1.7f, -0.5f, 1.0f));
+  car.root->addChild(car.left_wheel);
+
+  rightWheel_ = std::make_unique<Model>(resourceDir + "/car/right_wheel.gltf");
+  car.right_wheel = std::make_shared<GraphNode>(rightWheel_.get());
+  car.root->addChild(car.right_wheel);
+
+  leftBackWheel_ =
+      std::make_unique<Model>(resourceDir + "/car/left_back_wheel.gltf");
+  car.left_back_wheel = std::make_shared<GraphNode>(leftBackWheel_.get());
+  car.root->addChild(car.left_back_wheel);
+
+  rightBackWheel_ =
+      std::make_unique<Model>(resourceDir + "/car/right_back_wheel.gltf");
+  car.right_back_wheel = std::make_shared<GraphNode>(rightBackWheel_.get());
+  car.root->addChild(car.right_back_wheel);
+
+  leftDoors_ = std::make_unique<Model>(resourceDir + "/car/left_door.gltf");
+  car.left_doors = std::make_shared<GraphNode>(leftDoors_.get());
+  car.root->addChild(car.left_doors);
+
+  rightDoors_ = std::make_unique<Model>(resourceDir + "/car/right_door.gltf");
+  car.right_doors = std::make_shared<GraphNode>(rightDoors_.get());
+  car.root->addChild(car.right_doors);
+
+  carSpoiler_ = std::make_unique<Model>(resourceDir + "/car/spoiler.gltf");
+  car.spoiler = std::make_shared<GraphNode>(carSpoiler_.get());
+  car.spoiler->setSkipDraw(true);
+  car.root->addChild(car.spoiler);
   //
 
   // lights
@@ -406,6 +582,23 @@ void InteractiveScene::createScene(int houseCount) {
       houses_.push_back({houseRoot, walls, roof});
     }
   }
+}
+
+void InteractiveScene::updateCameraFollow() {
+  Transform &carTrans = car.root->getTransform();
+  glm::vec3 carPos = carTrans.getPosition();
+
+  float distance = 150.0f;
+
+  float yaw = camera_->getYaw();
+  float pitch = camera_->getPitch();
+
+  glm::vec3 offset;
+  offset.x = distance * cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+  offset.y = distance * sin(glm::radians(pitch));
+  offset.z = distance * cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
+  camera_->setPosition(carPos - offset);
 }
 
 Model *InteractiveScene::generatePlaneModel(float size, std::string textureDir,

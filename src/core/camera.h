@@ -29,8 +29,15 @@ public:
   void setProjection(float left, float right, float bottom, float top,
                      float zNear, float zFar);
 
-  void setYaw(const float yaw) { yaw_ = yaw; }
-  void setPitch(const float pitch) { pitch_ = pitch; }
+  void setPosition(const glm::vec3 pos) { position_ = pos; }
+  void setYaw(const float yaw) {
+    yaw_ = yaw;
+    updateCameraVectors();
+  }
+  void setPitch(const float pitch) {
+    pitch_ = pitch;
+    updateCameraVectors();
+  }
 
   float cameraSpeed = 2.5f;
   float mouseSensitivity = 0.1f;

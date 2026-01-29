@@ -5,10 +5,29 @@
 #include "core/light.h"
 #include "core/shader.h"
 #include "core/skybox.h"
-#include <climits>
 #include <memory>
 
 #define GLM_ENABLE_EXPERIMENTAL
+
+struct Car {
+  std::shared_ptr<GraphNode> root;
+  std::shared_ptr<GraphNode> body;
+  std::shared_ptr<GraphNode> glass;
+  std::shared_ptr<GraphNode> left_doors;
+  std::shared_ptr<GraphNode> right_doors;
+  std::shared_ptr<GraphNode> left_wheel;
+  std::shared_ptr<GraphNode> right_wheel;
+  std::shared_ptr<GraphNode> left_back_wheel;
+  std::shared_ptr<GraphNode> right_back_wheel;
+  std::shared_ptr<GraphNode> spoiler;
+
+  float speed = 0.0f;
+  float wheelAngle = 0.0f;
+  float yaw = 0.0f;
+  float steeringAngle = 0.0f;
+  bool doorOpen = false;
+  float doorOpenAngle = 0.0f;
+};
 
 struct HouseScene {
   std::shared_ptr<GraphNode> root;
@@ -42,6 +61,20 @@ private:
 
   std::unique_ptr<Model> cube_;
   std::unique_ptr<Model> character_;
+
+  Car car;
+  bool isDriving = false;
+  std::unique_ptr<Model> carBody_;
+  std::unique_ptr<Model> carGlass_;
+  std::unique_ptr<Model> leftDoors_;
+  std::unique_ptr<Model> rightDoors_;
+  std::unique_ptr<Model> leftWheel_;
+  std::unique_ptr<Model> leftBackWheel_;
+  std::unique_ptr<Model> rightWheel_;
+  std::unique_ptr<Model> rightBackWheel_;
+  std::unique_ptr<Model> carSpoiler_;
+
+  void updateCameraFollow();
   //
 
   // HousingEstate

@@ -11,7 +11,18 @@ void GraphNode::draw(Shader &shader, bool skipThisSubtree) {
   }
 
   for (auto &child : children_) {
-    child->draw(shader, false); // Dzieci normalnie
+    child->draw(shader, false);
+  }
+}
+
+void GraphNode::draw(Shader &shader) {
+  if (model_ && !skipDraw_) {
+    shader.setUniform("model", globalTransform_);
+    model_->draw(shader);
+  }
+
+  for (auto &child : children_) {
+    child->draw(shader, false);
   }
 }
 

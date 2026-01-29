@@ -12,7 +12,9 @@ public:
   GraphNode(Model *model = nullptr, GraphNode *parent = nullptr)
       : model_(model), parent_(parent) {}
 
-  virtual void draw(Shader &shader, bool skipThisSubtree = false);
+  virtual void draw(Shader &shader, bool skipThisSubtree);
+  virtual void draw(Shader &shader);
+
   void addChild(std::shared_ptr<GraphNode> child);
 
   Transform &getTransform();
