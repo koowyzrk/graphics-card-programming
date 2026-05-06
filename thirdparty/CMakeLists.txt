@@ -17,6 +17,11 @@ add_library(stb_image STATIC ${STB_IMAGE_DIR}/stb_image.cpp)
 target_include_directories(stb_image PRIVATE ${STB_IMAGE_DIR})
 
 # other
+# Assimp's pkg-config-based minizip detection can pick up a system layout
+# that exposes headers under /usr/include/minizip/ instead of /usr/include/.
+# Force the bundled zlib/minizip path so the build stays self-contained.
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "Build assimp's bundled zlib/minizip" FORCE)
+set(UNZIP_FOUND OFF CACHE BOOL "Disable external minizip detection for assimp" FORCE)
 CPMAddPackage("gh:assimp/assimp@5.4.3")
 CPMAddPackage("gh:glfw/glfw#3.3.8")
 CPMAddPackage("gh:g-truc/glm#1.0.1")
