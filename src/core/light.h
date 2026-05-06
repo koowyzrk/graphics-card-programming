@@ -61,6 +61,8 @@ public:
       shader.setUniform("isLightSource", true);
       shader.setUniform("lightVisualColor", light_.getColor());
 
+      shader.setUniform("hasTexture", false);
+      shader.setUniform("materialColor", glm::vec4(light_.getColor(), 1.0f));
       GraphNode::draw(shader);
       shader.setUniform("isLightSource", false);
     }

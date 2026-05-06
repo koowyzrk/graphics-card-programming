@@ -75,6 +75,7 @@ unsigned int SkyBox::loadCubeMap(const std::string &directory,
   }
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // GL_CLAMP_TO_EDGE zapobiega artefatkom na laczeniach tekstur
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -83,6 +84,9 @@ unsigned int SkyBox::loadCubeMap(const std::string &directory,
 }
 
 void SkyBox::draw(const glm::mat4 &view, const glm::mat4 &projection) {
+  // pozwala renderować na z=1.0
+  // musimy upewnić się, że skybox przechodzi testy głębokości z wartościami
+  // niższymi lub równymi od wartości bufora głębi
   glDepthFunc(GL_LEQUAL);
   shader_->use();
 

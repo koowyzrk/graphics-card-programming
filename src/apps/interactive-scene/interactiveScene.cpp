@@ -89,7 +89,7 @@ void InteractiveScene::input() {
     if (glfwGetKey(glfwWin, GLFW_KEY_W) == GLFW_PRESS)
       car.accelerationInput = 1.0f;
     else if (glfwGetKey(glfwWin, GLFW_KEY_S) == GLFW_PRESS)
-      car.accelerationInput = -0.5f; // Hamowanie słabsze niż przyspieszanie
+      car.accelerationInput = -0.5f;
     else
       car.accelerationInput = 0.0f;
 
@@ -583,7 +583,7 @@ void InteractiveScene::createScene(int houseCount) {
       auto houseRoot = std::make_shared<GraphNode>();
       float posX = i * spacing - offset;
       float posZ = j * spacing - offset;
-      houseRoot->getTransform().setPosition(glm::vec3(posX, 2.5f, posZ));
+      houseRoot->getTransform().setPosition(glm::vec3(posX, 5.0f, posZ));
 
       if (i % 2) {
         if (!(j % 2))
@@ -694,7 +694,7 @@ Model *InteractiveScene::generateCubeModel(float size, std::string textureDir) {
   addFace({{-s, -s, -s}, {-s, -s, s}, {-s, s, s}, {-s, s, -s}}, {-1, 0, 0},
           "red_brick_window.jpg");
   addFace({{s, -s, -s}, {s, s, -s}, {s, s, s}, {s, -s, s}}, {1, 0, 0},
-          "#include <iostream>red_brick_window.jpg");
+          "red_brick_window.jpg");
 
   return model;
 }

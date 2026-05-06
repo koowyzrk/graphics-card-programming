@@ -11,7 +11,9 @@ uniform mat4 projection;
 
 void main()
 {
+    // normalna musi zostac prostopadla do powierzchni po transformacji
     Normal = mat3(transpose(inverse(model))) * aNormal;
+    // pozycja wierzcholka w przestrzeni swiata
     Position = vec3(model * vec4(aPos, 1.0));
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }  

@@ -9,7 +9,10 @@ uniform samplerCube skybox;
 
 void main()
 {             
+    // kierunek patrzenia widza od fragmentu
     vec3 I = normalize(Position - cameraPos);
+    // obliczony wektor odbicia
     vec3 R = reflect(I, normalize(Normal));
+    // otrzymany wektor R jest następnie używany jako wektor kierunku do indeksowania/próbkowania cube mapy
     FragColor = vec4(texture(skybox, R).rgb, 1.0);
 }
